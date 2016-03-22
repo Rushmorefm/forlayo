@@ -13,7 +13,7 @@ echo "p3=$3"
 if [ ! -d "$APP_FOLDER" ]; then
 
     git clone "$ORIGIN" "$APP_FOLDER" 
-    if [ $? -ne 0 ]; then 
+    if [ $? -ne 0 ]; then
         echo "Error cloning repository '$ORIGIN'"
         exit 1
     fi
