@@ -11,5 +11,8 @@
     "url": "ssh://git@code.epiclabs.io:1979/up/hlsproxy.git"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.13.4"
+  }
 }
