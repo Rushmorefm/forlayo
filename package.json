@@ -1,0 +1,15 @@
+{
+  "name": "hlsproxy",
+  "version": "1.0.0",
+  "description": "HLS Proxy ======================",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@code.epiclabs.io:1979/up/hlsproxy.git"
+  },
+  "author": "",
+  "license": "ISC"
+}
