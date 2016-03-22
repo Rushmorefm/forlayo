@@ -18,5 +18,8 @@
     "express": "^4.13.4",
     "fluent-ffmpeg": "^2.0.1",
     "rimraf": "^2.5.2"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1"
   }
 }
