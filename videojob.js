@@ -1,4 +1,5 @@
 var ffmpeg = require('fluent-ffmpeg');
+var events = require('events');
 var rimraf = require("rimraf");
 var fs = require('fs')
 
@@ -15,7 +16,11 @@ function FFmpegJob(id, streamUrl, basePath) {
   this.manifestFile = this.outputFolder + "/" + HLS_SEGMENT_FILENAME_TEMPLATE;
   this.status = "initialized";
   this.markedAsEnded = false;
+  events.EventEmitter.call(this);
 }
+
+// Prepare class for emitting events
+FFmpegJob.prototype.__proto__ = events.EventEmitter.prototype;
 
 // start an existent job
 FFmpegJob.prototype.start = function() {
@@ -41,7 +46,18 @@ FFmpegJob.prototype.stop = function() {
     if (this.cmd !== undefined) 
         this.status = "Stopping";{
         this.cmd.kill('SIGSTOP');
+        this.signalEnd();
     }
+};
+
+// Emit end event
+FFmpegJob.prototype.signalEnd = function() {
+    this.emit('end');
+};
+
+// Emit error event
+FFmpegJob.prototype.signalError = function(err) {
+    this.emit('errors', err);
 };
 
 // mark as finished
@@ -77,14 +93,17 @@ FFmpegJobs.newJob = function(id, streamUrl, basePath) {
         if (wasKilled(err)) {
             console.log("Stream stopped as requested")
             this.status = "Finished";
+            job.signalEnd();
         } else {
             console.log('An error occurred processing stream .... : ' + err.message);
             this.status = "Errors found";
+            job.signalError(err);
         }
     })
     .on('end', function() { 
         console.log('Finished processing stream....');
-        this.status = "Finished"; 
+        this.status = "Finished";
+        job.signalEnd();
     })
     .on('progress', function(progress) { 
          this.status = "In progress";

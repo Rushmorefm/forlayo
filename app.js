@@ -14,7 +14,7 @@ app.use( bodyParser.json() );
 
 // Start a new job
 // curl -H "Content-Type: application/json" -X POST -d '{"streamUrl": "http://tokbox001-lh.akamaihd.net/i/8c891e94f1d240af9e71c15a29137f2c_1@392088/master.m3u8"}' localhost:3000/jobs/1231/start
-app.post('/jobs/:id/start', function(req, res) {
+app.post('/api/v1/jobs/:id/start', function(req, res) {
   var id = req.params.id;
   console.log("New job. Id: " + id + ", streamUrl: " + req.body);
   
@@ -25,6 +25,17 @@ app.post('/jobs/:id/start', function(req, res) {
     
     var job = videoJobs.newJob(id, streamUrl, OUTPUT_BASE_PATH)
     jobs[id] = job;
+    
+    job.on("end", function() {
+        console.log("Job finished!!!");    
+        delete jobs[job.id];
+    })
+    
+    job.on("errors", function() {
+        console.log("Job with errors. Removing it!!!");    
+        delete jobs[job.id];
+    })
+    
     job.start();
     
     responseOk(res);
@@ -32,7 +43,7 @@ app.post('/jobs/:id/start', function(req, res) {
 });
 
 // Mark as finished
-app.get('/jobs/:id/markAsFinished', function(req, res) {
+app.get('/api/v1/jobs/:id/markAsFinished', function(req, res) {
   var id = req.params.id;
   console.log("Marking as finished. Id: " + id);
   
@@ -46,7 +57,7 @@ app.get('/jobs/:id/markAsFinished', function(req, res) {
 });
 
 // Stop an existent job
-app.get('/jobs/:id/stop', function(req, res) {
+app.get('/api/v1/jobs/:id/stop', function(req, res) {
   
   var id = req.params.id;
   console.log("Stop job. Id: " + id);
@@ -62,7 +73,7 @@ app.get('/jobs/:id/stop', function(req, res) {
 });
 
 // Return the list of jobs
-app.get('/jobs', function(req, res) {
+app.get('/api/v1/jobs', function(req, res) {
     responseOk(res, jobs);
 });
 
