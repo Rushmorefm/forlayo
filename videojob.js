@@ -2,11 +2,16 @@ var ffmpeg = require('fluent-ffmpeg');
 var events = require('events');
 var rimraf = require("rimraf");
 var fs = require('fs')
+var request = require("request");
+
 
 // Duration of segments in seconds
 var HLS_SEGMENT_DURATION = 10;
 var HLS_SEGMENT_FILENAME_TEMPLATE = "master.m3u8"
 var HLS_DVR_DURATION_SECONDS = 300;
+
+var INITIALIZATION_TRY_INTERVAL = 5000;
+var INITIALIZATION_MAX_ERRORS = 100;
 
 // Constructor
 function FFmpegJob(id, streamUrl, basePath) {  
@@ -16,6 +21,9 @@ function FFmpegJob(id, streamUrl, basePath) {
   this.manifestFile = this.outputFolder + "/" + HLS_SEGMENT_FILENAME_TEMPLATE;
   this.status = "initialized";
   this.markedAsEnded = false;
+  this.markedAsStopped = false;
+  this.initializationErrorCount = 0;
+  this.cmd = undefined;
   events.EventEmitter.call(this);
 }
 
@@ -23,7 +31,30 @@ function FFmpegJob(id, streamUrl, basePath) {
 FFmpegJob.prototype.__proto__ = events.EventEmitter.prototype;
 
 // start an existent job
+// First, check if the resource (m3u8 already exists). If exists, launch
+// ffmpeg process, otherwise try again 5 seconds later
 FFmpegJob.prototype.start = function() {
+    var self = this;
+    console.log("Verifying " + self.streamUrl + " is up...");
+    request({uri: this.streamUrl, method: "GET"}, function(error, response, body) {
+        if (!error && response.statusCode == 200) {
+            console.log(self.streamUrl + " is up! Starting it....");
+            self.internalStart();
+        } else {
+            self.initializationErrorCount++;
+            if ( self.initializationErrorCount >= INITIALIZATION_MAX_ERRORS || self.markedAsStopped ) {
+                console.log(self.streamUrl + " is down after max retries. Finishing it");
+                self.signalError(error);
+            } else {
+                setTimeout(function() {
+                    self.start();
+                    }, INITIALIZATION_TRY_INTERVAL);
+            }
+        }
+    });
+};
+
+FFmpegJob.prototype.internalStart = function() {
     if (this.cmd !== undefined) {
         this.status = "Started";
         // create the output folder if it doesn't exist
@@ -37,12 +68,17 @@ FFmpegJob.prototype.start = function() {
                 fs.mkdirSync(this.outputFolder);
             }
         }
+             
         this.cmd.run();
+    } else {
+        console.log("Command was not set for stream: " + this.streamUrl);
     }
+    
 };
 
 // stop an existent job
 FFmpegJob.prototype.stop = function() {
+    this.markedAsStopped = true;
     if (this.cmd !== undefined) 
         this.status = "Stopping";{
         this.cmd.kill('SIGSTOP');

@@ -6,8 +6,12 @@ var bodyParser = require('body-parser')
 var videoJobs = require('./videojob.js'); 
 
 var jobs = {};
-var OUTPUT_BASE_PATH = "./output";
+var OUTPUT_BASE_PATH = process.env.videoOutput;
+if (OUTPUT_BASE_PATH === undefined || OUTPUT_BASE_PATH.length == 0) {
+ OUTPUT_BASE_PATH = "./output";   
+}
 
+console.log("Output base path set in " + OUTPUT_BASE_PATH);
 
 // Add json support (post/put with json objects)
 app.use( bodyParser.json() );
@@ -74,7 +78,10 @@ app.get('/api/v1/jobs/:id/stop', function(req, res) {
 
 // Return the list of jobs
 app.get('/api/v1/jobs', function(req, res) {
-    responseOk(res, jobs);
+    var result = Object.keys(jobs).map(function(key, index) {
+        return {"id":jobs[key].id, "streamUrl": jobs[key].streamUrl, "status": jobs[key].status};
+    });
+    responseOk(res, result);
 });
 
 // Launch the web server
@@ -84,13 +91,13 @@ app.listen(3000, function(){
 
 function responseOk(res, result) {
     if (result === undefined) {
-        res.json({"errorCode": 0, "result": "OK"});
+        res.status(200).json({"errorCode": 0, "result": "OK"});
     } else {
-        res.json({"errorCode": 0, "result": result});
+        res.status(200).json({"errorCode": 0, "result": result});
     }
 }
 
 function responseError(res, errorCode, errorMessage) {
-    res.json({"errorCode": errorCode, "result": errorMessage});
+    res.status(errorCode).json({"errorCode": errorCode, "result": errorMessage});
 }
 
