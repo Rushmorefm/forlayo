@@ -2,7 +2,7 @@ var gulp = require('gulp'),
     spawn = require('child_process').spawn,
     node;
 
-gulp.task('server', function() {
+gulp.task('run', function() {
   if (node) {
       node.kill()
   }
@@ -15,7 +15,7 @@ gulp.task('server', function() {
   });
 });
 
-gulp.task('default', ["server"]);
+gulp.task('default', ["run"]);
 
 // clean up if an error goes unhandled.
 process.on('exit', function() {
