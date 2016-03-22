@@ -2,8 +2,9 @@
 var express = require('express');
 var app = express();
 var bodyParser = require('body-parser')
+var videoJobs = require('./videojob.js');
 
-var videoJobs = require('./videojob.js'); 
+require('log-timestamp'); 
 
 var jobs = {};
 var OUTPUT_BASE_PATH = process.env.videoOutput;
@@ -20,11 +21,12 @@ app.use( bodyParser.json() );
 // curl -H "Content-Type: application/json" -X POST -d '{"streamUrl": "http://tokbox001-lh.akamaihd.net/i/8c891e94f1d240af9e71c15a29137f2c_1@392088/master.m3u8"}' localhost:3000/jobs/1231/start
 app.post('/api/v1/jobs/:id/start', function(req, res) {
   var id = req.params.id;
-  console.log("New job. Id: " + id + ", streamUrl: " + req.body);
-  
+ 
   if(req.body === undefined || req.body.streamUrl === undefined) {
+      console.log("Bad start request received");
       responseError(res, 500, "Stream url not provided");
   } else {
+    console.log("New job. Id: " + id + ", streamUrl: " + req.body.streamUrl);
     var streamUrl = req.body.streamUrl;
     
     var job = videoJobs.newJob(id, streamUrl, OUTPUT_BASE_PATH)
@@ -36,7 +38,7 @@ app.post('/api/v1/jobs/:id/start', function(req, res) {
     })
     
     job.on("errors", function() {
-        console.log("Job with errors. Removing it!!!");    
+        console.log("Job with errors. Removing it from the list of pending jobs!!!");    
         delete jobs[job.id];
     })
     
@@ -54,26 +56,28 @@ app.get('/api/v1/jobs/:id/markAsFinished', function(req, res) {
   var job = jobs[id];
   if (job !== undefined) {
       job.markAsFinished();
+      responseError(res, 404, "Job " + id + "doesn't exist");
   } else {
-      console.log("The job id " + id + " doesn't exist");
+      console.log("The job Id " + id + " doesn't exist");
+      responseOk(res);
   }
-  responseOk(res);
 });
 
 // Stop an existent job
 app.get('/api/v1/jobs/:id/stop', function(req, res) {
   
   var id = req.params.id;
-  console.log("Stop job. Id: " + id);
+  console.log("Stopping job.... Id: " + id);
   
   var job = jobs[id];
   if (job !== undefined) {
-      console.log("Stop job id: " + id);
+      console.log("Stopped job Id: " + id);
       job.stop();
+      responseOk(res);
   } else {
-      console.log("The job id " + id + " doesn't exist");
+      console.log("The job Id " + id + " doesn't exist"); 
+      responseError(res, 404, "Job " + id + "doesn't exist");
   }
-  responseOk(res);
 });
 
 // Return the list of jobs

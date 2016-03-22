@@ -35,15 +35,15 @@ FFmpegJob.prototype.__proto__ = events.EventEmitter.prototype;
 // ffmpeg process, otherwise try again 5 seconds later
 FFmpegJob.prototype.start = function() {
     var self = this;
-    console.log("Verifying " + self.streamUrl + " is up...");
+    log("Verifying stream is up...", this);
     request({uri: this.streamUrl, method: "GET"}, function(error, response, body) {
         if (!error && response.statusCode == 200) {
-            console.log(self.streamUrl + " is up! Starting it....");
+            log("Stream is up! Starting it....", self);
             self.internalStart();
         } else {
             self.initializationErrorCount++;
             if ( self.initializationErrorCount >= INITIALIZATION_MAX_ERRORS || self.markedAsStopped ) {
-                console.log(self.streamUrl + " is down after max retries. Finishing it");
+                log("Stream is down after max retries. Finishing it", self);
                 self.signalError(error);
             } else {
                 setTimeout(function() {
@@ -71,7 +71,7 @@ FFmpegJob.prototype.internalStart = function() {
              
         this.cmd.run();
     } else {
-        console.log("Command was not set for stream: " + this.streamUrl);
+       log("Command was not set for the stream", this);
     }
     
 };
@@ -127,25 +127,34 @@ FFmpegJobs.newJob = function(id, streamUrl, basePath) {
     .output(job.manifestFile)
     .on('error', function(err) {
         if (wasKilled(err)) {
-            console.log("Stream stopped as requested")
-            this.status = "Finished";
+            log("Stream stopped as requested", job);
+            job.status = "Finished";
             job.signalEnd();
         } else {
-            console.log('An error occurred processing stream .... : ' + err.message);
+            log("An error occurred processing the stream, error: " + err.message, job);
             this.status = "Errors found";
             job.signalError(err);
         }
     })
     .on('end', function() { 
-        console.log('Finished processing stream....');
-        this.status = "Finished";
+        
+        if (!job.markedAsEnded) {
+            log("Finished without being signaled as finished", job);
+        } else {
+            log("Finished processing stream", job);
+        }
+        job.status = "Finished";
         job.signalEnd();
     })
     .on('progress', function(progress) { 
-         this.status = "In progress";
+         job.status = "In progress";
     });
     
     return job;
+}
+
+function log(message, job) {
+    console.log(message + ", Stream: " + job.streamUrl + " (" + job.id + ")");
 }
 
 // Return true if the 
