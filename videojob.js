@@ -10,8 +10,13 @@ var HLS_SEGMENT_DURATION = 10;
 var HLS_SEGMENT_FILENAME_TEMPLATE = "master.m3u8"
 var HLS_DVR_DURATION_SECONDS = 300;
 
+// Retries during initialization phase (checking master.m3u8 exists)
 var INITIALIZATION_TRY_INTERVAL = 5000;
 var INITIALIZATION_MAX_ERRORS = 100;
+
+// Retries during ffmpeg process launch 
+var FFMPEG_TRY_INTERVAL = 5000;
+var FFMPEG_MAX_ERRORS = 10;
 
 // Constructor
 function FFmpegJob(id, streamUrl, basePath) {  
@@ -23,6 +28,8 @@ function FFmpegJob(id, streamUrl, basePath) {
   this.markedAsEnded = false;
   this.markedAsStopped = false;
   this.initializationErrorCount = 0;
+  this.ffmpegErrorCount = 0;
+  this.processStarted = false;
   this.cmd = undefined;
   events.EventEmitter.call(this);
 }
@@ -37,12 +44,17 @@ FFmpegJob.prototype.start = function() {
     var self = this;
     log("Verifying stream is up...", this);
     request({uri: this.streamUrl, method: "GET"}, function(error, response, body) {
+        if (self.markedAsStopped) {
+            log("Stream was marked as stopped. Removed from the queue.", self);
+            return;
+        }
+        
         if (!error && response.statusCode == 200) {
             log("Stream is up! Starting it....", self);
             self.internalStart();
         } else {
             self.initializationErrorCount++;
-            if ( self.initializationErrorCount >= INITIALIZATION_MAX_ERRORS || self.markedAsStopped ) {
+            if (self.initializationErrorCount >= INITIALIZATION_MAX_ERRORS) {
                 log("Stream is down after max retries. Finishing it", self);
                 self.signalError(error);
             } else {
@@ -113,19 +125,42 @@ function FFmpegJobs() {
 FFmpegJobs.newJob = function(id, streamUrl, basePath) {
   var job = new FFmpegJob(id, streamUrl, basePath);  
   
+  buildFfmpegCommand(job, id, streamUrl, basePath);
+    
+  return job;
+}
+
+// Build the ffmpeg command
+function buildFfmpegCommand(job, id, streamUrl, basePath) {
   job.cmd = ffmpeg(streamUrl)
     .outputOptions([
         '-acodec copy',
         '-vcodec copy',
         '-hls_time ' + HLS_SEGMENT_DURATION,
         '-hls_list_size ' + Math.round(HLS_DVR_DURATION_SECONDS / HLS_SEGMENT_DURATION),
-        //'-f segment',
-        //'-segment_format mpegts',
-        //'-segment_list_type m3u8',
-        //'-segment_list master.m3u8'
         ])
     .output(job.manifestFile)
     .on('error', function(err) {
+        // Process didn't stop, let's give some time
+        // to the source to generate HLS stream...
+        if (!job.processStarted) {
+            job.ffmpegErrorCount++;
+            log("Error detected while initializing ffmpeg process", job);
+            
+            if (self.markedAsStopped) {
+                log("Stream was marked as stopped. Removed from the queue.", self);
+                return;
+            }
+            
+            if (job.ffmpegErrorCount >= FFMPEG_MAX_ERRORS) {
+                log("Max initialization errors reached (ffmpeg couldn't connect)", job);
+                job.signalError(error);
+            } else {
+                log("Relaunching ffmpeg...", job);
+                buildFfmpegCommand(job, id, streamUrl, basePath);
+            }
+        }
+        
         if (wasKilled(err)) {
             log("Stream stopped as requested", job);
             job.status = "Finished";
@@ -146,15 +181,17 @@ FFmpegJobs.newJob = function(id, streamUrl, basePath) {
         job.status = "Finished";
         job.signalEnd();
     })
-    .on('progress', function(progress) { 
+    .on('progress', function(progress) {
+         if (!job.processStarted) {
+             log("Generation of HLS output files started", job);
+         } 
          job.status = "In progress";
+         job.processStarted = true;
     });
-    
-    return job;
 }
 
 function log(message, job) {
-    console.log(message + ", Stream: " + job.streamUrl + " (" + job.id + ")");
+    console.log(message + " - Stream: " + job.streamUrl + " (" + job.id + ")");
 }
 
 // Return true if the 
