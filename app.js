@@ -105,3 +105,10 @@ function responseError(res, errorCode, errorMessage) {
     res.status(errorCode).json({"errorCode": errorCode, "result": errorMessage});
 }
 
+
+// Close all the pending streams gracefully
+process.on('SIGTERM', function () {
+    for (var key in jobs) {
+        job.stop();
+    }
+});

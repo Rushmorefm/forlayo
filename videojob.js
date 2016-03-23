@@ -159,16 +159,16 @@ function buildFfmpegCommand(job, id, streamUrl, basePath) {
                 log("Relaunching ffmpeg...", job);
                 buildFfmpegCommand(job, id, streamUrl, basePath);
             }
-        }
-        
-        if (wasKilled(err)) {
-            log("Stream stopped as requested", job);
-            job.status = "Finished";
-            job.signalEnd();
-        } else {
-            log("An error occurred processing the stream, error: " + err.message, job);
-            this.status = "Errors found";
-            job.signalError(err);
+        } else { // Error while processing the stream. Signal and finish
+            if (wasKilled(err)) {
+                log("Stream stopped as requested", job);
+                job.status = "Finished";
+                job.signalEnd();
+            } else {
+                log("An error occurred processing the stream, error: " + err.message, job);
+                this.status = "Errors found";
+                job.signalError(err);
+            }
         }
     })
     .on('end', function() { 
