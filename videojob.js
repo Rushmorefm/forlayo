@@ -44,7 +44,7 @@ FFmpegJob.prototype.start = function() {
     var self = this;
     log("Verifying stream is up...", this);
     request({uri: this.streamUrl, method: "GET"}, function(error, response, body) {
-        if (self.markedAsStopped) {
+        if (self.markedAsStopped /*|| self.markedAsEnded*/) {
             log("Stream was marked as stopped. Removed from the queue.", self);
             return;
         }
@@ -147,7 +147,7 @@ function buildFfmpegCommand(job, id, streamUrl, basePath) {
             job.ffmpegErrorCount++;
             log("Error detected while initializing ffmpeg process", job);
             
-            if (job.markedAsStopped) {
+            if (job.markedAsStopped /*|| job.markedAsEnded*/) {
                 log("Stream was marked as stopped. Removed from the queue.", job);
                 return;
             }
