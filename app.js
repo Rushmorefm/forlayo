@@ -88,6 +88,11 @@ app.get('/api/v1/jobs', function(req, res) {
     responseOk(res, result);
 });
 
+app.use(function(req, res, next) {
+    console.log("Sorry can't find the url: " + req.url);
+  res.status(404).send('Sorry cant find that');
+});
+
 // Launch the web server
 app.listen(3000, function(){
     console.log("Server listening on port %d in %s mode", 3000, app.settings.env);
