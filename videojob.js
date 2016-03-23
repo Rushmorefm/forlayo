@@ -132,7 +132,6 @@ FFmpegJobs.newJob = function(id, streamUrl, basePath) {
 
 // Build the ffmpeg command
 function buildFfmpegCommand(job, id, streamUrl, basePath) {
-  log("Building ffmpeg command", job);
   job.cmd = ffmpeg(streamUrl)
     .outputOptions([
         '-acodec copy',
@@ -160,7 +159,9 @@ function buildFfmpegCommand(job, id, streamUrl, basePath) {
                 log("Relaunching ffmpeg...", job);
                 
                 setTimeout(function() {
+                    log("Rebuilding ffmpeg command and launching the process", job);
                     buildFfmpegCommand(job, id, streamUrl, basePath);
+                    job.start();
                     }, FFMPEG_TRY_INTERVAL);
             }
         } else { // Error while processing the stream. Signal and finish
