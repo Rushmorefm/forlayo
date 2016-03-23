@@ -148,7 +148,7 @@ function buildFfmpegCommand(job, id, streamUrl, basePath) {
             log("Error detected while initializing ffmpeg process", job);
             
             if (job.markedAsStopped) {
-                log("Stream was marked as stopped. Removed from the queue.", self);
+                log("Stream was marked as stopped. Removed from the queue.", job);
                 return;
             }
             
