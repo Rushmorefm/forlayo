@@ -154,7 +154,7 @@ function buildFfmpegCommand(job, id, streamUrl, basePath) {
             
             if (job.ffmpegErrorCount >= FFMPEG_MAX_ERRORS) {
                 log("Max initialization errors reached (ffmpeg couldn't connect)", job);
-                job.signalError(error);
+                job.signalError(err);
             } else {
                 log("Relaunching ffmpeg...", job);
                 
