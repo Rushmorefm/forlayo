@@ -147,7 +147,7 @@ function buildFfmpegCommand(job, id, streamUrl, basePath) {
             job.ffmpegErrorCount++;
             log("Error detected while initializing ffmpeg process", job);
             
-            if (self.markedAsStopped) {
+            if (job.markedAsStopped) {
                 log("Stream was marked as stopped. Removed from the queue.", self);
                 return;
             }
