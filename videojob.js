@@ -6,9 +6,9 @@ var request = require("request");
 
 
 // Duration of segments in seconds
-var HLS_SEGMENT_DURATION = 10;
+//var HLS_SEGMENT_DURATION = 10;
 var HLS_SEGMENT_FILENAME_TEMPLATE = "master.m3u8"
-var HLS_DVR_DURATION_SECONDS = 300;
+//var HLS_DVR_DURATION_SECONDS = 300;
 
 // Retries during initialization phase (checking master.m3u8 exists)
 var INITIALIZATION_TRY_INTERVAL = 5000;
@@ -19,7 +19,7 @@ var FFMPEG_TRY_INTERVAL = 5000;
 var FFMPEG_MAX_ERRORS = 10;
 
 // Constructor
-function FFmpegJob(id, streamUrl, basePath) {  
+function FFmpegJob(id, streamUrl, basePath, hlsSegmentSize, hlsMaxSegments) {  
   this.id = id;
   this.streamUrl = streamUrl;
   this.outputFolder = basePath + "/" + this.id;
@@ -29,6 +29,8 @@ function FFmpegJob(id, streamUrl, basePath) {
   this.markedAsStopped = false;
   this.initializationErrorCount = 0;
   this.ffmpegErrorCount = 0;
+  this.hlsSegmentSize = hlsSegmentSize;
+  this.hlsMaxSegments = hlsMaxSegments;
   this.processStarted = false;
   this.cmd = undefined;
   events.EventEmitter.call(this);
@@ -122,22 +124,22 @@ function FFmpegJobs() {
     
 }
 // Create a new ffmpeg job
-FFmpegJobs.newJob = function(id, streamUrl, basePath) {
-  var job = new FFmpegJob(id, streamUrl, basePath);  
+FFmpegJobs.newJob = function(id, streamUrl, basePath, hlsSegmentSize, hlsMaxSegments) {
+  var job = new FFmpegJob(id, streamUrl, basePath, hlsSegmentSize, hlsMaxSegments);  
   
-  buildFfmpegCommand(job, id, streamUrl, basePath);
+  buildFfmpegCommand(job, id, streamUrl, basePath, hlsSegmentSize, hlsMaxSegments);
     
   return job;
 }
 
 // Build the ffmpeg command
-function buildFfmpegCommand(job, id, streamUrl, basePath) {
+function buildFfmpegCommand(job, id, streamUrl, basePath, hlsSegmentSize, hlsMaxSegments) {
   job.cmd = ffmpeg(streamUrl)
     .outputOptions([
         '-acodec copy',
         '-vcodec copy',
-        '-hls_time ' + HLS_SEGMENT_DURATION,
-        '-hls_list_size ' + Math.round(HLS_DVR_DURATION_SECONDS / HLS_SEGMENT_DURATION),
+        '-hls_time ' + hlsSegmentSize,
+        '-hls_list_size ' + hlsMaxSegments,
         ])
     .output(job.manifestFile)
     .on('error', function(err) {

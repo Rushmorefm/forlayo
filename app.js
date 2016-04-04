@@ -7,18 +7,42 @@ var videoJobs = require('./videojob.js');
 require('log-timestamp'); 
 
 var jobs = {};
+
+// Parse output path
 var OUTPUT_BASE_PATH = process.env.videoOutput;
 if (OUTPUT_BASE_PATH === undefined || OUTPUT_BASE_PATH.length == 0) {
  OUTPUT_BASE_PATH = "./output";   
 }
 
-console.log("Output base path set in " + OUTPUT_BASE_PATH);
+// Parse HLS segment size (in seconds)
+var OUTPUT_VIDEO_HLS_SEGMENT_SIZE = 10;
+var segmentSize = process.env.hlsSegmentSize;
+if (segmentSize !== undefined && !isNaN(segmentSize)) {
+    OUTPUT_VIDEO_HLS_SEGMENT_SIZE = parseInt(segmentSize);   
+    if (OUTPUT_VIDEO_HLS_SEGMENT_SIZE <= 0) {
+        OUTPUT_VIDEO_HLS_SEGMENT_SIZE = 10;
+    }
+}
 
+
+// Parse max number of segments. 0 means no limit
+var OUTPUT_VIDEO_MAX_SEGMENTS = 0;
+var maxSegments = process.env.hlsMaxSegments;
+if (maxSegments !== undefined && !isNaN(maxSegments)) {
+    OUTPUT_VIDEO_MAX_SEGMENTS = parseInt(maxSegments);   
+    if (OUTPUT_VIDEO_MAX_SEGMENTS < 0) {
+        OUTPUT_VIDEO_MAX_SEGMENTS = 0;
+    }
+} 
+ 
+
+console.log("Output base path set in " + OUTPUT_BASE_PATH);
+console.log("HLS Config. Max duration " + OUTPUT_VIDEO_MAX_SEGMENTS + " segments, Segment size: " + OUTPUT_VIDEO_HLS_SEGMENT_SIZE + " seconds");
 // Add json support (post/put with json objects)
 app.use( bodyParser.json() );
 
 // Start a new job
-// curl -H "Content-Type: application/json" -X POST -d '{"streamUrl": "http://tokbox001-lh.akamaihd.net/i/8c891e94f1d240af9e71c15a29137f2c_1@392088/master.m3u8"}' localhost:3000/jobs/1231/start
+// curl -H "Content-Type: application/json" -X POST -d '{"streamUrl": "http://tokbox001-lh.akamaihd.net/i/8c891e94f1d240af9e71c15a29137f2c_1@392088/master.m3u8"}' localhost:3000/api/v1/jobs/1231/start
 app.post('/api/v1/jobs/:id/start', function(req, res) {
   var id = req.params.id;
  
@@ -29,7 +53,7 @@ app.post('/api/v1/jobs/:id/start', function(req, res) {
     console.log("New job. Id: " + id + ", streamUrl: " + req.body.streamUrl);
     var streamUrl = req.body.streamUrl;
     
-    var job = videoJobs.newJob(id, streamUrl, OUTPUT_BASE_PATH)
+    var job = videoJobs.newJob(id, streamUrl, OUTPUT_BASE_PATH, OUTPUT_VIDEO_HLS_SEGMENT_SIZE, OUTPUT_VIDEO_MAX_SEGMENTS);
     jobs[id] = job;
     
     job.on("end", function() {
