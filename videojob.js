@@ -143,6 +143,7 @@ function buildFfmpegCommand(job, id, streamUrl, basePath, hlsSegmentSize, hlsMax
         ])
     .output(job.manifestFile)
     .on('error', function(err) {
+        console.log("FFMPEG Error: " + err);
         // Process didn't stop, let's give some time
         // to the source to generate HLS stream...
         if (!job.processStarted) {
