@@ -139,8 +139,8 @@ function buildFfmpegCommand(job, id, streamUrl, basePath, hlsSegmentSize, hlsMax
     .outputOptions([
         '-acodec copy',
         '-vcodec copy',
-        '-hls_time ' + hlsSegmentSize,
-        '-hls_list_size ' + hlsMaxSegments,
+        '-hls_time ' + 10,
+        '-hls_list_size ' + 2000,
         ])
     .output(job.manifestFile)
     .on('error', function(err) {
