@@ -16,7 +16,7 @@ var INITIALIZATION_MAX_ERRORS = 100;
 
 // Retries during ffmpeg process launch 
 var FFMPEG_TRY_INTERVAL = 5000;
-var FFMPEG_MAX_ERRORS = 10;
+var FFMPEG_MAX_ERRORS = 20;
 
 // Constructor
 function FFmpegJob(id, streamUrl, basePath, hlsSegmentSize, hlsMaxSegments) {  
