@@ -134,6 +134,7 @@ FFmpegJobs.newJob = function(id, streamUrl, basePath, hlsSegmentSize, hlsMaxSegm
 
 // Build the ffmpeg command
 function buildFfmpegCommand(job, id, streamUrl, basePath, hlsSegmentSize, hlsMaxSegments) {
+  console.log("Building command. Job: " + job.manifestFile);
   job.cmd = ffmpeg(streamUrl)
     .outputOptions([
         '-acodec copy',
