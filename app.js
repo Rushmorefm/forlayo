@@ -148,7 +148,7 @@ app.use(function(req, res, next) {
 });
 
 // Launch the web server
-app.listen(3000, function(){
+app.listen(SERVER_PORT, function(){
     console.log("Server listening on port %d in %s mode", SERVER_PORT, app.settings.env);
 });
 
