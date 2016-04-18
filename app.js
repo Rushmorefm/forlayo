@@ -34,6 +34,16 @@ if (maxSegments !== undefined && !isNaN(maxSegments)) {
         OUTPUT_VIDEO_MAX_SEGMENTS = 0;
     }
 } 
+
+// Server port
+var SERVER_PORT = 3000;
+var serverPort = process.env.hlsProxyPort;
+if (serverPort !== undefined && !isNaN(serverPort)) {
+    SERVER_PORT = parseInt(serverPort);   
+    if (SERVER_PORT < 1024 || SERVER_PORT > 32000) {
+        SERVER_PORT = 3000;
+    }
+} 
  
 
 console.log("Output base path set in " + OUTPUT_BASE_PATH);
@@ -139,7 +149,7 @@ app.use(function(req, res, next) {
 
 // Launch the web server
 app.listen(3000, function(){
-    console.log("Server listening on port %d in %s mode", 3000, app.settings.env);
+    console.log("Server listening on port %d in %s mode", SERVER_PORT, app.settings.env);
 });
 
 function responseOk(res, result) {
