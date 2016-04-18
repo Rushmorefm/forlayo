@@ -52,8 +52,9 @@ app.post('/api/v1/jobs/:id/start', function(req, res) {
   } else {
     console.log("New job. Id: " + id + ", streamUrl: " + req.body.streamUrl);
     var streamUrl = req.body.streamUrl;
+    var callbackUrl = req.body.callbackUrl;
     
-    var job = videoJobs.newJob(id, streamUrl, OUTPUT_BASE_PATH, OUTPUT_VIDEO_HLS_SEGMENT_SIZE, OUTPUT_VIDEO_MAX_SEGMENTS);
+    var job = videoJobs.newJob(id, streamUrl, callbackUrl, OUTPUT_BASE_PATH, OUTPUT_VIDEO_HLS_SEGMENT_SIZE, OUTPUT_VIDEO_MAX_SEGMENTS);
     jobs[id] = job;
     
     job.on("end", function() {
@@ -110,6 +111,25 @@ app.get('/api/v1/jobs', function(req, res) {
         return {"id":jobs[key].id, "streamUrl": jobs[key].streamUrl, "status": jobs[key].status};
     });
     responseOk(res, result);
+});
+
+
+// Stop an existent job and delete all its files (m3u8 and ts segments)
+app.delete('/api/v1/jobs/:id', function(req, res) {
+  var id = req.params.id;
+  console.log("Deleting job.... Id: " + id);
+  
+  var job = jobs[id];
+  if (job !== undefined) {
+      console.log("Stopped job Id: " + id);
+      job.stop();   
+  } else {
+      job = videoJobs.newJob(id, "", "", OUTPUT_BASE_PATH, OUTPUT_VIDEO_HLS_SEGMENT_SIZE, OUTPUT_VIDEO_MAX_SEGMENTS);
+  }
+  
+  job.removeAllFiles();
+  
+  responseOk(res);
 });
 
 app.use(function(req, res, next) {

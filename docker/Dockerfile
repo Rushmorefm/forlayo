@@ -1,12 +1,15 @@
 FROM node
 MAINTAINER Javier Peletier jm@epiclabs.io
 
-RUN wget https://www.deb-multimedia.org/pool/main/d/deb-multimedia-keyring/deb-multimedia-keyring_2016.3.7_all.deb
-RUN dpkg -i deb-multimedia-keyring_2016.3.7_all.deb
-RUN echo "deb http://www.deb-multimedia.org jessie main non-free" > /etc/apt/sources.list.d/deb-multimedia.list
-RUN apt-get update
-RUN apt-get install -y \
-	ffmpeg
+ENV FFMPEG_VERSION=3.0 \
+    X264_VERSION=snapshot-20160218-2245-stable
+
+# Enable Universe and Multiverse and install dependencies.
+RUN echo deb http://archive.ubuntu.com/ubuntu precise universe multiverse >> /etc/apt/sources.list; apt-get update; apt-get -y install autoconf automake build-essential git mercurial cmake libass-dev libgpac-dev libtheora-dev libtool libvdpau-dev libvorbis-dev pkg-config texi2html zlib1g-dev libmp3lame-dev wget yasm; apt-get clean
+
+
+COPY install.sh /var/cache/ffmpeg/install.sh
+RUN bash /var/cache/ffmpeg/install.sh
 
 RUN npm install -g gulp
 RUN npm install -g typings

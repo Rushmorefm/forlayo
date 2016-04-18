@@ -19,9 +19,10 @@ var FFMPEG_TRY_INTERVAL = 5000;
 var FFMPEG_MAX_ERRORS = 20;
 
 // Constructor
-function FFmpegJob(id, streamUrl, basePath, hlsSegmentSize, hlsMaxSegments) {  
+function FFmpegJob(id, streamUrl, callbackUrl, basePath, hlsSegmentSize, hlsMaxSegments) {  
   this.id = id;
   this.streamUrl = streamUrl;
+  this.callbackUrl = callbackUrl;
   this.outputFolder = basePath + "/" + this.id;
   this.manifestFile = this.outputFolder + "/" + HLS_SEGMENT_FILENAME_TEMPLATE;
   this.status = "initialized";
@@ -124,27 +125,27 @@ function FFmpegJobs() {
     
 }
 // Create a new ffmpeg job
-FFmpegJobs.newJob = function(id, streamUrl, basePath, hlsSegmentSize, hlsMaxSegments) {
-  var job = new FFmpegJob(id, streamUrl, basePath, hlsSegmentSize, hlsMaxSegments);  
+FFmpegJobs.newJob = function(id, streamUrl, callbackUrl, basePath, hlsSegmentSize, hlsMaxSegments) {
+  var job = new FFmpegJob(id, streamUrl, callbackUrl, basePath, hlsSegmentSize, hlsMaxSegments);  
   
-  buildFfmpegCommand(job, id, streamUrl, basePath, hlsSegmentSize, hlsMaxSegments);
+  buildFfmpegCommand(job);
     
   return job;
 }
 
 // Build the ffmpeg command
-function buildFfmpegCommand(job, id, streamUrl, basePath, hlsSegmentSize, hlsMaxSegments) {
-  console.log("Building command. Job: " + job.manifestFile);
-  job.cmd = ffmpeg(streamUrl)
+function buildFfmpegCommand(job) {
+  log("Building command. Job: " + job.manifestFile + ", Segment size: " + job.hlsSegmentSize + ", Segments: " + job.hlsMaxSegments, job);
+  job.cmd = ffmpeg(job.streamUrl)
     .outputOptions([
         '-acodec copy',
         '-vcodec copy',
-        '-hls_time ' + 10,
-        '-hls_list_size ' + 2000,
+        '-hls_time ' + job.hlsSegmentSize,
+        '-hls_list_size ' + job.hlsMaxSegments,
         ])
     .output(job.manifestFile)
     .on('error', function(err) {
-        console.log("FFMPEG Error: " + err);
+        log("FFMPEG Error: " + err, job);
         // Process didn't stop, let's give some time
         // to the source to generate HLS stream...
         if (!job.processStarted) {
@@ -164,7 +165,7 @@ function buildFfmpegCommand(job, id, streamUrl, basePath, hlsSegmentSize, hlsMax
                 
                 setTimeout(function() {
                     log("Rebuilding ffmpeg command and launching the process", job);
-                    buildFfmpegCommand(job, id, streamUrl, basePath);
+                    buildFfmpegCommand(job);
                     job.start();
                     }, FFMPEG_TRY_INTERVAL);
             }
@@ -193,6 +194,13 @@ function buildFfmpegCommand(job, id, streamUrl, basePath, hlsSegmentSize, hlsMax
     .on('progress', function(progress) {
          if (!job.processStarted) {
              log("Generation of HLS output files started", job);
+             
+             if (job.callbackUrl !== undefined && job.callbackUrl.length > 0) {
+                request({uri: job.callbackUrl, method: "GET"}, function(error, response, body) {
+                    log("Calling callback to notify stream started: job.callbackUrl", job);
+                });    
+             }
+             
          } 
          job.status = "In progress";
          job.processStarted = true;
