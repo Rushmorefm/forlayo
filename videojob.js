@@ -197,7 +197,7 @@ function buildFfmpegCommand(job) {
              
              if (job.callbackUrl !== undefined && job.callbackUrl.length > 0) {
                 request({uri: job.callbackUrl, method: "GET"}, function(error, response, body) {
-                    log("Calling callback to notify stream started: job.callbackUrl", job);
+                    log("Calling callback to notify stream started: " + job.callbackUrl, job);
                 });    
              }
              
