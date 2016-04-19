@@ -123,6 +123,18 @@ app.get('/api/v1/jobs', function(req, res) {
     responseOk(res, result);
 });
 
+app.get('/api/v1/health', function(req, res) {
+    var exec = require('child_process').exec;
+    var cmd = 'mount -l -t fuse.s3fs';
+    exec(cmd, function(err, stdout, stderr) {
+        if (err || stdout == "") {
+            responseError(res, 500, "Error");
+        } else {
+            responseOk(res);   
+        }
+    }) 
+});
+
 
 // Stop an existent job and delete all its files (m3u8 and ts segments)
 app.delete('/api/v1/jobs/:id', function(req, res) {
