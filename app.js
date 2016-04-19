@@ -124,15 +124,15 @@ app.get('/api/v1/jobs', function(req, res) {
 });
 
 app.get('/api/v1/health', function(req, res) {
-    var exec = require('child_process').exec;
-    var cmd = 'mount -l -t fuse.s3fs';
-    exec(cmd, function(err, stdout, stderr) {
-        if (err || stdout == "") {
+    var fs = require('extfs');
+
+    fs.isEmpty(OUTPUT_BASE_PATH, function (empty) {
+        if (empty) {
             responseError(res, 500, "Error");
         } else {
-            responseOk(res);   
+            responseOk(res); 
         }
-    }) 
+    });
 });
 
 
