@@ -8,10 +8,26 @@ require('log-timestamp');
 
 var jobs = {};
 
+var s3Mount = false;
+
+var fs = require('extfs');
+
 // Parse output path
 var OUTPUT_BASE_PATH = process.env.videoOutput;
 if (OUTPUT_BASE_PATH === undefined || OUTPUT_BASE_PATH.length == 0) {
  OUTPUT_BASE_PATH = "./output";   
+}
+
+var retries = 5;
+function checkS3Mount() {
+    fs.isEmpty(OUTPUT_BASE_PATH, function (empty) {
+        s3Mount = !empty;
+        
+        if (!s3Mount && retries >= 0) {
+            retries--;
+            setTimeout(checkS3Mount, 5000);
+        }
+    });
 }
 
 // Parse HLS segment size (in seconds)
@@ -126,13 +142,12 @@ app.get('/api/v1/jobs', function(req, res) {
 app.get('/api/v1/health', function(req, res) {
     var fs = require('extfs');
 
-    fs.isEmpty(OUTPUT_BASE_PATH, function (empty) {
-        if (empty) {
-            responseError(res, 500, "Error");
-        } else {
-            responseOk(res); 
-        }
-    });
+    if (!s3Mount) {
+        responseError(res, 500, "Error");
+    } else {
+        responseOk(res); 
+    }
+
 });
 
 
