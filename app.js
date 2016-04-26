@@ -20,7 +20,8 @@ if (OUTPUT_BASE_PATH === undefined || OUTPUT_BASE_PATH.length == 0) {
 
 var retries = 5;
 function checkS3Mount() {
-    fs.isEmpty(OUTPUT_BASE_PATH, function (empty) {
+    var healthPath = OUTPUT_BASE_PATH + "/health";
+    fs.isEmpty(healthPath, function (empty) {
         s3Mount = !empty;
         console.log("S3Mount: " + s3Mount + ", " + OUTPUT_BASE_PATH);
         if (!s3Mount && retries >= 0) {
