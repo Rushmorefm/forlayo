@@ -18,16 +18,11 @@ if (OUTPUT_BASE_PATH === undefined || OUTPUT_BASE_PATH.length == 0) {
  OUTPUT_BASE_PATH = "./output";   
 }
 
-var retries = 5;
 function checkS3Mount() {
     var healthPath = OUTPUT_BASE_PATH + "/health";
     fs.isEmpty(healthPath, function (empty) {
         s3Mount = !empty;
         console.log("S3Mount: " + s3Mount + ", " + OUTPUT_BASE_PATH);
-        if (!s3Mount && retries >= 0) {
-            retries--;
-            setTimeout(checkS3Mount, 5000);
-        }
     });
 }
 checkS3Mount();
@@ -144,12 +139,14 @@ app.get('/api/v1/jobs', function(req, res) {
 app.get('/api/v1/health', function(req, res) {
     var fs = require('extfs');
 
+    // Response as soon as possible and check s3 again to be ready for the next health request
     if (!s3Mount) {
         responseError(res, 500, "Error");
     } else {
         responseOk(res); 
     }
-
+    
+    checkS3Mount();
 });
 
 
