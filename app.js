@@ -68,6 +68,12 @@ app.use( bodyParser.json() );
 // curl -H "Content-Type: application/json" -X POST -d '{"streamUrl": "http://tokbox001-lh.akamaihd.net/i/8c891e94f1d240af9e71c15a29137f2c_1@392088/master.m3u8"}' localhost:3000/api/v1/jobs/1231/start
 app.post('/api/v1/jobs/:id/start', function(req, res) {
   var id = req.params.id;
+  
+  if (jobs[id] !== undefined) {
+    console.log("I can not start a job that is already in progress!!!");
+    responseError(res, 500, "Stream is already in progress"); 
+    return;     
+  }
  
   if(req.body === undefined || req.body.streamUrl === undefined) {
       console.log("Bad start request received");
@@ -76,6 +82,7 @@ app.post('/api/v1/jobs/:id/start', function(req, res) {
     console.log("New job. Id: " + id + ", streamUrl: " + req.body.streamUrl);
     var streamUrl = req.body.streamUrl;
     var callbackUrl = req.body.callbackUrl;
+    
     
     var job = videoJobs.newJob(id, streamUrl, callbackUrl, OUTPUT_BASE_PATH, OUTPUT_VIDEO_HLS_SEGMENT_SIZE, OUTPUT_VIDEO_MAX_SEGMENTS);
     jobs[id] = job;
