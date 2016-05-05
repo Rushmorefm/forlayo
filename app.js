@@ -156,6 +156,39 @@ app.get('/api/v1/health', function(req, res) {
     checkS3Mount();
 });
 
+// Mark a stream as deleted
+app.get('/api/v1/delete/:id', function(req, res) {
+    var id = req.params.id;
+    console.log("Marking as deleted the job.... Id: " + id);
+    
+    if (videoJobs.getStatus(id) !== "deleted") {
+        
+    }
+    responseOk(res);
+});
+
+// Mark a stream as private
+app.get('/api/v1/private/:id', function(req, res) {
+    var id = req.params.id;
+    console.log("Marking as private the job.... Id: " + id);
+    
+    if (videoJobs.getStatus(id) !== "private") {
+        
+    }
+    responseOk(res);
+});
+
+// Remove deleted/privated flags of a stream
+app.get('/api/v1/restore/:id', function(req, res) {
+    var id = req.params.id;
+    console.log("Marking as public the job.... Id: " + id);
+    
+    if (videoJobs.getStatus(id) !== "public") {
+        
+    }
+    responseOk(res);
+});
+
 
 // Stop an existent job and delete all its files (m3u8 and ts segments)
 app.delete('/api/v1/jobs/:id', function(req, res) {

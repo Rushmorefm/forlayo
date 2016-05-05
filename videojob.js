@@ -133,6 +133,12 @@ FFmpegJobs.newJob = function(id, streamUrl, callbackUrl, basePath, hlsSegmentSiz
   return job;
 }
 
+FFmpegJobs.getStatus = function(id) {
+    // "public|private|deleted"
+    return "public";  
+};
+
+
 // Build the ffmpeg command
 function buildFfmpegCommand(job) {
   log("Building command. Job: " + job.manifestFile + ", Segment size: " + job.hlsSegmentSize + ", Segments: " + job.hlsMaxSegments, job);

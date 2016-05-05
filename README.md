@@ -16,7 +16,23 @@ API:
 ```
     GET /api/v1/jobs/:id/stop
 ```
-* Get the list of jons
+* Mark a finished job as deleted. Response 404 when job doesn't exist or it is not finished; otherwise 200 
+``` 
+    GET /api/v1/jobs/:id/delete
+```    
+* Mark a finished job as private. Response 404 when job doesn't exist or it is not finished; otherwise 200
+``` 
+    GET /api/v1/jobs/:id/private
+```    
+* Restore a job that was previously marked as deleted or private. Response 404 when job doesn't exist or it is not delete or finished; otherwise 200
+``` 
+    GET /api/v1/jobs/:id/restore
+```
+* Stop a job in case it is running and delete all its files. Take care using this method!!!!
+``` 
+    DELETE /api/v1/jobs/:id
+```        
+* Get the list of jobs
 ``` 
     GET /api/v1/jobs
 ```   
