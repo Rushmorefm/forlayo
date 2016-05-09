@@ -6,11 +6,19 @@ var videoJobs = require('./videojob.js');
 
 require('log-timestamp'); 
 
+var raven = require('raven');
+
+var sentryDSN = 'https://8b07943bc95049ac9ffb4b679fd57d06:7b2e4c9eb78b41fa86ae5e5dc7b82581@app.getsentry.com/77434';
+var ravenClient = new raven.Client(sentryDSN);
+
+
 var jobs = {};
 
 var s3Mount = false;
 
 var fs = require('extfs');
+
+ravenClient.patchGlobal();
 
 // Parse output path
 var OUTPUT_BASE_PATH = process.env.videoOutput;
@@ -61,6 +69,11 @@ if (serverPort !== undefined && !isNaN(serverPort)) {
 
 console.log("Output base path set in " + OUTPUT_BASE_PATH);
 console.log("HLS Config. Max duration " + OUTPUT_VIDEO_MAX_SEGMENTS + " segments, Segment size: " + OUTPUT_VIDEO_HLS_SEGMENT_SIZE + " seconds");
+
+// The request handler must be the first item
+app.use(raven.middleware.express.requestHandler(sentryDSN));
+
+
 // Add json support (post/put with json objects)
 app.use( bodyParser.json() );
 
@@ -81,9 +94,15 @@ app.post('/api/v1/jobs/:id/start', function(req, res) {
   } else {
     console.log("New job. Id: " + id + ", streamUrl: " + req.body.streamUrl);
     var streamUrl = req.body.streamUrl;
+    // If we are working with an Akamai stream, force a keyframe in segment boundaries
+    if (streamUrl.indexOf("akamaihd.net/i/") > 0) {
+        if (streamUrl.indexOf("?") > 0) {
+            streamUrl = streamUrl + "&set-akamai-hls-revision=4";
+        } else {
+            streamUrl = streamUrl + "?set-akamai-hls-revision=4";
+        }
+    }
     var callbackUrl = req.body.callbackUrl;
-    
-    
     var job = videoJobs.newJob(id, streamUrl, callbackUrl, OUTPUT_BASE_PATH, OUTPUT_VIDEO_HLS_SEGMENT_SIZE, OUTPUT_VIDEO_MAX_SEGMENTS);
     jobs[id] = job;
     
@@ -92,9 +111,10 @@ app.post('/api/v1/jobs/:id/start', function(req, res) {
         delete jobs[job.id];
     })
     
-    job.on("errors", function() {
+    job.on("errors", function(err) {
         console.log("Job with errors. Removing it from the list of pending jobs!!!");    
         delete jobs[job.id];
+        ravenClient.captureMessage('Job ' + job.id + " with errors: " + err);
     })
     
     job.start();
@@ -138,7 +158,7 @@ app.get('/api/v1/jobs/:id/stop', function(req, res) {
 // Return the list of jobs
 app.get('/api/v1/jobs', function(req, res) {
     var result = Object.keys(jobs).map(function(key, index) {
-        return {"id":jobs[key].id, "streamUrl": jobs[key].streamUrl, "status": jobs[key].status};
+        return {"id":jobs[key].id, "streamUrl": jobs[key].streamUrl, "upcloseStreamUrl": jobs[key].upcloseStreamUrl, "status": jobs[key].status};
     });
     responseOk(res, result);
 });
@@ -213,6 +233,9 @@ app.use(function(req, res, next) {
   res.status(404).send('Sorry cant find that');
 });
 
+// The error handler must be before any other error middleware
+app.use(raven.middleware.express.errorHandler(sentryDSN));
+
 // Launch the web server
 app.listen(SERVER_PORT, function(){
     console.log("Server listening on port %d in %s mode", SERVER_PORT, app.settings.env);
@@ -236,4 +259,5 @@ process.on('SIGTERM', function () {
     for (var key in jobs) {
         job.stop();
     }
+    ravenClient.captureMessage("Closing app....");
 });

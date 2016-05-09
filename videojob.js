@@ -12,11 +12,14 @@ var HLS_SEGMENT_FILENAME_TEMPLATE = "master.m3u8"
 
 // Retries during initialization phase (checking master.m3u8 exists)
 var INITIALIZATION_TRY_INTERVAL = 5000;
-var INITIALIZATION_MAX_ERRORS = 100;
+var INITIALIZATION_MAX_ERRORS = 40;
 
 // Retries during ffmpeg process launch 
 var FFMPEG_TRY_INTERVAL = 5000;
 var FFMPEG_MAX_ERRORS = 20;
+
+// Upclose CDN Url
+var UPCLOSE_CDN_URL = "https://cdn.upclose.me/";
 
 // Constructor
 function FFmpegJob(id, streamUrl, callbackUrl, basePath, hlsSegmentSize, hlsMaxSegments) {  
@@ -34,6 +37,7 @@ function FFmpegJob(id, streamUrl, callbackUrl, basePath, hlsSegmentSize, hlsMaxS
   this.hlsMaxSegments = hlsMaxSegments;
   this.processStarted = false;
   this.cmd = undefined;
+  this.upcloseStreamUrl = UPCLOSE_CDN_URL + id + "/master.m3u8";
   events.EventEmitter.call(this);
 }
 
@@ -202,7 +206,7 @@ function buildFfmpegCommand(job) {
              log("Generation of HLS output files started", job);
              
              if (job.callbackUrl !== undefined && job.callbackUrl.length > 0) {
-                request({uri: job.callbackUrl, method: "GET"}, function(error, response, body) {
+                request({uri: job.callbackUrl, method: "POST", json: {"id": job.id, "upcloseStreamUrl": job.upcloseStreamUrl}}, function(error, response, body) {
                     log("Calling callback to notify stream started: " + job.callbackUrl, job);
                 });    
              }
