@@ -83,8 +83,12 @@ FFmpegJob.prototype.internalStart = function() {
             if ( e.code != 'EEXIST' ) {
                 throw e;
             } else {
-                this.removeAllFiles();
-                fs.mkdirSync(this.outputFolder);
+                try {
+                    this.removeAllFiles();
+                    fs.mkdirSync(this.outputFolder);
+                } catch(e) {
+                    this.signalError("FS Error");
+                }
             }
         }
              
