@@ -211,8 +211,8 @@ function buildFfmpegCommand(job) {
              
              if (job.callbackUrl !== undefined && job.callbackUrl.length > 0) {
                 request({uri: job.callbackUrl, method: "POST", json: {"id": job.id, "upcloseStreamUrl": job.upcloseStreamUrl}}, function(error, response, body) {
-                    log("Calling callback to notify stream started: " + job.callbackUrl, job);
-                    if (error) {
+                    log("Calling callback to notify stream started: " + job.callbackUrl + ", response: " + response + ", body: " + body, job);
+                    if (error || response.statusCode != 200) {
                         job.signalError("Error calling callback: " + error + ", body: " + body);
                     }
                 });    
