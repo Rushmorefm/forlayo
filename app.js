@@ -114,7 +114,7 @@ app.post('/api/v1/jobs/:id/start', function(req, res) {
     job.on("errors", function(err) {
         console.log("Job with errors. Removing it from the list of pending jobs!!!");    
         delete jobs[job.id];
-        ravenClient.captureMessage('Job ' + job.id + " with errors: " + err);
+        ravenClient.captureMessage(err + ". Job: " + job.id);
     })
     
     job.start();

@@ -63,7 +63,7 @@ FFmpegJob.prototype.start = function() {
             self.initializationErrorCount++;
             if (self.initializationErrorCount >= INITIALIZATION_MAX_ERRORS) {
                 log("Stream is down after max retries. Finishing it", self);
-                self.signalError(error);
+                self.signalError("HLS initialization failure. HTTP Error code: " + (response ? response.statusCode : "Unknown"));
             } else {
                 setTimeout(function() {
                     self.start();
@@ -87,7 +87,7 @@ FFmpegJob.prototype.internalStart = function() {
                     this.removeAllFiles();
                     fs.mkdirSync(this.outputFolder);
                 } catch(e) {
-                    this.signalError("FS Error");
+                    this.signalError("HLS S3 failed. Desc: " + e);
                 }
             }
         }
@@ -173,7 +173,7 @@ function buildFfmpegCommand(job) {
             
             if (job.ffmpegErrorCount >= FFMPEG_MAX_ERRORS) {
                 log("Max initialization errors reached (ffmpeg couldn't connect)", job);
-                job.signalError(err);
+                job.signalError("HLS initialization failure (FFMPEG initialization). Desc: " + err);
             } else {
                 log("Relaunching ffmpeg...", job);
                 
@@ -191,7 +191,7 @@ function buildFfmpegCommand(job) {
             } else {
                 log("An error occurred processing the stream, error: " + err.message, job);
                 this.status = "Errors found";
-                job.signalError(err);
+                job.signalError("HLS Job failed. Desc: " + err);
             }
         }
     })
@@ -213,7 +213,7 @@ function buildFfmpegCommand(job) {
                 request({uri: job.callbackUrl, headers: {"User-agent": "HLSProxy/0.1"}, method: "POST", json: {"id": job.id, "upcloseStreamUrl": job.upcloseStreamUrl}}, function(error, response, body) {
                     log("Calling callback to notify stream started: " + job.callbackUrl, job);
                     if (error || response.statusCode != 200) {
-                        job.signalError("Error calling callback: " + error + ", body: " + body);
+                        job.signalError("HLS Callback failed. Error calling callback: " + error + ", body: " + body);
                     }
                 });    
              }
