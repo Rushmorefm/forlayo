@@ -6,11 +6,8 @@ API:
 
 * Launch a new job (streamUrl must be passed in the body. Ex: {"streamUrl": "http://........"}
 ```
-    POST /api/v1/jobs/:id/start
-```
-* Mark a job as finished
-```
-    GET /api/v1/jobs/:id/markAsFinished
+    POST /api/v1/jobs/:id
+    POST /api/v1/jobs/:id/start (available for backward compatibility)
 ```
 * Stop a job that is currently running
 ```

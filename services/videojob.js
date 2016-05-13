@@ -1,9 +1,10 @@
+'use strict';
+
 var ffmpeg = require('fluent-ffmpeg');
 var events = require('events');
 var rimraf = require("rimraf");
 var fs = require('fs')
 var request = require("request");
-
 
 // Duration of segments in seconds
 //var HLS_SEGMENT_DURATION = 10;
@@ -22,119 +23,121 @@ var FFMPEG_MAX_ERRORS = 20;
 var UPCLOSE_CDN_URL = "https://cdn.upclose.me/";
 
 // Constructor
-function FFmpegJob(id, streamUrl, callbackUrl, basePath, hlsSegmentSize, hlsMaxSegments) {  
-  this.id = id;
-  this.streamUrl = streamUrl;
-  this.callbackUrl = callbackUrl;
-  this.outputFolder = basePath + "/" + this.id;
-  this.manifestFile = this.outputFolder + "/" + HLS_SEGMENT_FILENAME_TEMPLATE;
-  this.status = "initialized";
-  this.markedAsEnded = false;
-  this.markedAsStopped = false;
-  this.initializationErrorCount = 0;
-  this.ffmpegErrorCount = 0;
-  this.hlsSegmentSize = hlsSegmentSize;
-  this.hlsMaxSegments = hlsMaxSegments;
-  this.processStarted = false;
-  this.cmd = undefined;
-  this.upcloseStreamUrl = UPCLOSE_CDN_URL + id + "/master.m3u8";
-  events.EventEmitter.call(this);
-}
-
-// Prepare class for emitting events
-FFmpegJob.prototype.__proto__ = events.EventEmitter.prototype;
-
-// start an existent job
-// First, check if the resource (m3u8 already exists). If exists, launch
-// ffmpeg process, otherwise try again 5 seconds later
-FFmpegJob.prototype.start = function() {
-    var self = this;
-    log("Verifying stream is up...", this);
-    request({uri: this.streamUrl, method: "GET"}, function(error, response, body) {
-        if (self.markedAsStopped /*|| self.markedAsEnded*/) {
-            log("Stream was marked as stopped. Removed from the queue.", self);
-            return;
-        }
-        
-        if (!error && response.statusCode == 200) {
-            log("Stream is up! Starting it....", self);
-            self.internalStart();
-        } else {
-            self.initializationErrorCount++;
-            if (self.initializationErrorCount >= INITIALIZATION_MAX_ERRORS) {
-                log("Stream is down after max retries. Finishing it", self);
-                self.signalError("HLS initialization failure. HTTP Error code: " + (response ? response.statusCode : "Unknown"));
-            } else {
-                setTimeout(function() {
-                    self.start();
-                    }, INITIALIZATION_TRY_INTERVAL);
-            }
-        }
-    });
-};
-
-FFmpegJob.prototype.internalStart = function() {
-    if (this.cmd !== undefined) {
-        this.status = "Started";
-        // create the output folder if it doesn't exist
-        try {
-            fs.mkdirSync(this.outputFolder);
-        } catch(e) {
-            if ( e.code != 'EEXIST' ) {
-                throw e;
-            } else {
-                try {
-                    this.removeAllFiles();
-                    fs.mkdirSync(this.outputFolder);
-                } catch(e) {
-                    this.signalError("HLS S3 failed. Desc: " + e);
-                }
-            }
-        }
-             
-        this.cmd.run();
-    } else {
-       log("Command was not set for the stream", this);
+class FFmpegJob extends events.EventEmitter{
+    constructor(id, streamUrl, callbackUrl, basePath, hlsSegmentSize, hlsMaxSegments, userAgent) {
+        super();
+          
+        this.id = id;
+        this.streamUrl = streamUrl;
+        this.callbackUrl = callbackUrl;
+        this.outputFolder = basePath + "/" + this.id;
+        this.manifestFile = this.outputFolder + "/" + HLS_SEGMENT_FILENAME_TEMPLATE;
+        this.status = "initialized";
+        this.markedAsEnded = false;
+        this.markedAsStopped = false;
+        this.initializationErrorCount = 0;
+        this.ffmpegErrorCount = 0;
+        this.hlsSegmentSize = hlsSegmentSize;
+        this.hlsMaxSegments = hlsMaxSegments;
+        this.processStarted = false;
+        this.cmd = undefined;
+        this.upcloseStreamUrl = UPCLOSE_CDN_URL + id + "/master.m3u8";
+        this.userAgent = userAgent;   
     }
     
-};
-
-// stop an existent job
-FFmpegJob.prototype.stop = function() {
-    this.markedAsStopped = true;
-    if (this.cmd !== undefined) 
-        this.status = "Stopping";{
-        this.cmd.kill('SIGSTOP');
-        this.signalEnd();
+    // start an existent job
+    // First, check if the resource (m3u8 already exists). If exists, launch
+    // ffmpeg process, otherwise try again 5 seconds later
+    start() {
+        log("Verifying stream is up...", this);
+        request({uri: this.streamUrl, method: "GET"}, (error, response, body) => {
+            if (this.markedAsStopped /*|| this.markedAsEnded*/) {
+                log("Stream was marked as stopped. Removed from the queue.", this);
+                return;
+            }
+            
+            if (!error && response.statusCode == 200) {
+                log("Stream is up! Starting it....", this);
+                this.internalStart();
+            } else {
+                this.initializationErrorCount++;
+                if (this.initializationErrorCount >= INITIALIZATION_MAX_ERRORS) {
+                    log("Stream is down after max retries. Finishing it", this);
+                    this.signalError("HLS initialization failure. HTTP Error code: " + (response ? response.statusCode : "Unknown"));
+                } else {
+                    setTimeout(
+                        this.start.bind(this)
+                        , INITIALIZATION_TRY_INTERVAL);
+                }
+            }
+        });
     }
-};
+    
+    internalStart() {
+        if (this.cmd !== undefined) {
+            this.status = "Started";
+            // create the output folder if it doesn't exist
+            try {
+                fs.mkdirSync(this.outputFolder);
+            } catch(e) {
+                if ( e.code != 'EEXIST' ) {
+                    throw e;
+                } else {
+                    try {
+                        this.removeAllFiles();
+                        fs.mkdirSync(this.outputFolder);
+                    } catch(e) {
+                        this.signalError("HLS S3 failed. Desc: " + e);
+                    }
+                }
+            }
+                
+            this.cmd.run();
+        } else {
+        log("Command was not set for the stream", this);
+        }
+        
+    }
 
-// Emit end event
-FFmpegJob.prototype.signalEnd = function() {
-    this.emit('end');
-};
+    // stop an existent job
+    stop() {
+        this.markedAsStopped = true;
+        if (this.cmd !== undefined) 
+            this.status = "Stopping";{
+            this.cmd.kill('SIGSTOP');
+            this.signalEnd();
+        }
+    }
 
-// Emit error event
-FFmpegJob.prototype.signalError = function(err) {
-    this.emit('errors', err);
-};
+    // Emit end event
+    signalEnd() {
+        this.emit('end');
+    }
 
-// mark as finished
-FFmpegJob.prototype.markAsFinished = function() {
-    this.markedAsEnded = true;
-};
+    // Emit error event
+    signalError(err) {
+        this.emit('errors', err);
+    }
 
-// Remove all files associated with a job
-FFmpegJob.prototype.removeAllFiles = function() {
-    rimraf.sync(this.outputFolder);
-};
+    // mark as finished
+    markAsFinished() {
+        this.markedAsEnded = true;
+    }
+
+    // Remove all files associated with a job
+    removeAllFiles() {
+        rimraf.sync(this.outputFolder);
+    }
+    
+}
 
 function FFmpegJobs() {
     
 }
+
 // Create a new ffmpeg job
-FFmpegJobs.newJob = function(id, streamUrl, callbackUrl, basePath, hlsSegmentSize, hlsMaxSegments) {
-  var job = new FFmpegJob(id, streamUrl, callbackUrl, basePath, hlsSegmentSize, hlsMaxSegments);  
+FFmpegJobs.newJob = function(id, streamUrl, callbackUrl, basePath, hlsSegmentSize, hlsMaxSegments, userAgent) {
+  let job = new FFmpegJob(id, streamUrl, callbackUrl, basePath, hlsSegmentSize, hlsMaxSegments, userAgent);  
   
   buildFfmpegCommand(job);
     
@@ -177,10 +180,10 @@ function buildFfmpegCommand(job) {
             } else {
                 log("Relaunching ffmpeg...", job);
                 
-                setTimeout(function() {
-                    log("Rebuilding ffmpeg command and launching the process", job);
-                    buildFfmpegCommand(job);
-                    job.start();
+                setTimeout(() => {
+                        log("Rebuilding ffmpeg command and launching the process", job);
+                        buildFfmpegCommand(job);
+                        job.start();
                     }, FFMPEG_TRY_INTERVAL);
             }
         } else { // Error while processing the stream. Signal and finish
@@ -210,7 +213,7 @@ function buildFfmpegCommand(job) {
              log("Generation of HLS output files started", job);
              
              if (job.callbackUrl !== undefined && job.callbackUrl.length > 0) {
-                request({uri: job.callbackUrl, headers: {"User-agent": "HLSProxy/0.1"}, method: "POST", json: {"id": job.id, "upcloseStreamUrl": job.upcloseStreamUrl}}, function(error, response, body) {
+                request({uri: job.callbackUrl, headers: {"User-agent": job.userAgent}, method: "POST", json: {"id": job.id, "upcloseStreamUrl": job.upcloseStreamUrl}}, (error, response, body) => {
                     log("Calling callback to notify stream started: " + job.callbackUrl, job);
                     if (error || response.statusCode != 200) {
                         job.signalError("HLS Callback failed. Error calling callback: " + error + ", body: " + body);
