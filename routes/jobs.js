@@ -108,21 +108,63 @@ function markAsDeleted(req, res) {
     let id = req.params.id;
     console.log("Marking as deleted the job.... Id: " + id);
     
-    if (videoJobs.getStatus(id) !== "deleted") {
-        
-    }
-    utils.responseOk(res);
+    getStatusInternal(id, req, res)
+    .then((status) => {
+        if (status === videoJobs.STATUS_PUBLIC) {
+            let job = videoJobs.newJob(id, "", "", req.appConfig.OUTPUT_BASE_PATH, 
+                req.appConfig.OUTPUT_VIDEO_HLS_SEGMENT_SIZE, 
+                req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS,
+                req.appConfig.USER_AGENT);
+            job.markAsDeleted()
+            .then (() => {
+                utils.responseOk(res);
+            }, (err) => {
+                console.log("Job " + id + ", stream couldn't be marked as deleted");
+                req.ravenClient.captureMessage(err + ". Job " + id + ", stream couldn't be marked as deleted");
+                utils.responseError(res, 400, err);
+            });
+        } else {
+            console.log("Job " + id + ", can not not change status to deleted due to current status is not public");
+            req.ravenClient.captureMessage("Job " + id + ", can not not change status to deleted due to current status is not public");
+            utils.responseError(res, 400, "Can not not change status to deleted due to current status is not public");
+        }    
+    }, (err) => {
+        console.log("Error in markAsDeleted. " + err);
+        req.ravenClient.captureMessage("Job " + id + ", marking as deleted. Error: " + err);
+        utils.responseError(res, 400, err);
+    }); 
 }
 
 // Mark a stream as private
 function markAsPrivate(req, res) {
     let id = req.params.id;
     console.log("Marking as private the job.... Id: " + id);
-    
-    if (videoJobs.getStatus(id) !== "private") {
-        
-    }
-    utils.responseOk(res);
+   
+    getStatusInternal(id, req, res)
+    .then((status) => {
+        if (status === videoJobs.STATUS_PUBLIC) {
+            let job = videoJobs.newJob(id, "", "", req.appConfig.OUTPUT_BASE_PATH, 
+                req.appConfig.OUTPUT_VIDEO_HLS_SEGMENT_SIZE, 
+                req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS,
+                req.appConfig.USER_AGENT);
+            job.markAsPrivate()
+            .then (() => {
+                utils.responseOk(res);
+            }, (err) => {
+                console.log("Job " + id + ", stream couldn't be marked as private");
+                req.ravenClient.captureMessage(err + ". Job " + id + ", stream couldn't be marked as private");
+                utils.responseError(res, 400, err);
+            });
+        } else {
+            console.log("Job " + id + ", can not not change status to private due to current status is not public");
+            req.ravenClient.captureMessage("Job " + id + ", an not not change status to private due to current status is not public");
+            utils.responseError(res, 400, "Can not not change status to private due to current status is not public");
+        }    
+    }, (err) => {
+        console.log("Error in markAsPrivate. " + err);
+        req.ravenClient.captureMessage("Job " + id + ", marking as private. Error: " + err);
+        utils.responseError(res, 400, err);
+    });
 }
 
 // Remove deleted/privated flags of a stream
@@ -130,10 +172,69 @@ function markAsRestored(req, res) {
     let id = req.params.id;
     console.log("Marking as public the job.... Id: " + id);
     
-    if (videoJobs.getStatus(id) !== "public") {
-        
-    }
-    utils.responseOk(res);
+    getStatusInternal(id, req, res)
+    .then((status) => {
+        if (status === videoJobs.STATUS_PRIVATE || status === videoJobs.STATUS_DELETED) {
+            let job = videoJobs.newJob(id, "", "", req.appConfig.OUTPUT_BASE_PATH, 
+                req.appConfig.OUTPUT_VIDEO_HLS_SEGMENT_SIZE, 
+                req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS,
+                req.appConfig.USER_AGENT);
+            job.markAsRestored()
+            .then (() => {
+                utils.responseOk(res);
+            }, (err) => {
+                console.log("Job " + id + ", stream couldn't be restored");
+                req.ravenClient.captureMessage(err + ". Job " + id + ", stream couldn't be restored");
+                utils.responseError(res, 400, err);
+            });
+            
+        } else {
+            console.log("Job " + id + ", can not not change status to restored due to current status is neither private nor deleted");
+            req.ravenClient.captureMessage("Job " + id + ", can not not change status to restored due to current status is neither private nor deleted");
+            utils.responseError(res, 400, "Can not not change status to restored due to current status is neither private nor deleted");
+        }    
+    }, (err) => {
+        console.log("Error in markAsRestoredin. " + err);
+        req.ravenClient.captureMessage("Job " + id + ", marking as restored. Error: " + err);
+        utils.responseError(res, 400, err);
+    });
+}
+
+// Return the status of a job
+function getStatus(req, res) {
+    let id = req.params.id;
+    console.log("Getting status of the job.... Id: " + id);
+    
+    getStatusInternal(id, req, res)
+    .then((status) => {
+        utils.responseOk(res, status);
+    }, (err) => {
+        req.ravenClient.captureMessage("Job " + id + ", while getting status. Error: " + err);
+        utils.responseError(res, 404, err);
+    });
+}
+
+function getStatusInternal(id, req, res) {
+    let job = jobs[id];
+    
+    return new Promise((resolve, reject) => {
+        if (job !== undefined) {
+            // If we have a reference to the job,then it is running
+            resolve(videoJobs.STATUS_RUNNING);
+        } else {
+            job = videoJobs.newJob(id, "", "", req.appConfig.OUTPUT_BASE_PATH, 
+                req.appConfig.OUTPUT_VIDEO_HLS_SEGMENT_SIZE, 
+                req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS,
+                req.appConfig.USER_AGENT);    
+                    
+            job.getStatus().
+            then ((status) => {
+                resolve(status);
+            }, (err) => {
+                reject(err);
+            })
+        }
+    });
 }
 
 /** ROUTES */
@@ -160,5 +261,8 @@ router.get('/:id/private', markAsPrivate);
 
 // Remove deleted/privated flags of a stream
 router.get('/:id/restore', markAsRestored);
+
+// Remove deleted/privated flags of a stream
+router.get('/:id/status', getStatus);
 
 module.exports = router;

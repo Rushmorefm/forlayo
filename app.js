@@ -58,8 +58,6 @@ class Config {
 
 // App configuration
 var config = new Config();
-
-
 console.log("Output base path set in " + config.OUTPUT_BASE_PATH);
 console.log("HLS Config. Max duration " + config.OUTPUT_VIDEO_MAX_SEGMENTS + " segments, Segment size: " + config.OUTPUT_VIDEO_HLS_SEGMENT_SIZE + " seconds");
 
@@ -67,9 +65,9 @@ console.log("HLS Config. Max duration " + config.OUTPUT_VIDEO_MAX_SEGMENTS + " s
 app.use(raven.middleware.express.requestHandler(sentryDSN));
 
 // Add json support (post/put with json objects)
-app.use( bodyParser.json() );
+app.use(bodyParser.json());
 
-app.use( (req, res, next) => {
+app.use((req, res, next) => {
     req.ravenClient = ravenClient;
     req.appConfig = config;
     next();
