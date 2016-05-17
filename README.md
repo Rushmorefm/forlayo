@@ -1,5 +1,4 @@
-HLS Proxy
-======================
+# HLS Proxy
 
 
 API: 
@@ -37,3 +36,14 @@ API:
 ``` 
     GET /api/v1/health
 ```    
+
+## Sentry errors
+Sentry Dashboard: https://app.getsentry.com/upclose/hls-proxy/dashboard
+
+* **CallbackError**. Request to callback url failed.
+* **JobError**. Job failed while streaming capture was running.
+* **InitializationError**. Job failed in the initialization process. Reason: tokbox m3u8 was never available.
+* **InitializationFFMPEGError**. Job failed when trying to start ffmpeg process. Reason tokbox m3u8 was available although it doesn't contain a valid HLS stream
+* **S3Error**. Error while uploading files to S3.
+* **HealthError**. Check health status error (backend or/and S3 volume not available).
+* **JobStatusError**. Error while changing status of a job (private/delete/recovery). 

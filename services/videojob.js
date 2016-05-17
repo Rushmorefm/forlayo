@@ -264,7 +264,7 @@ function buildFfmpegCommand(job) {
 
                 if (job.ffmpegErrorCount >= FFMPEG_MAX_ERRORS) {
                     log("Max initialization errors reached (ffmpeg couldn't connect)", job);
-                    job.signalError("InitializationError (FFMPEG initialization). Desc: " + err);
+                    job.signalError("InitializationFFMPEGError. Desc: " + err);
                 } else {
                     log("Relaunching ffmpeg...", job);
 
