@@ -95,5 +95,5 @@ process.on('SIGTERM', () => {
     for (let key in jobs) {
         job.stop();
     }
-    ravenClient.captureMessage("Closing app....");
+    ravenClient.captureMessage("AppClose");
 });

@@ -71,7 +71,7 @@ class FFmpegJob extends events.EventEmitter {
                 this.initializationErrorCount++;
                 if (this.initializationErrorCount >= INITIALIZATION_MAX_ERRORS) {
                     log("Stream is down after max retries. Finishing it", this);
-                    this.signalError("HLS initialization failure. HTTP Error code: " + (response ? response.statusCode : "Unknown"));
+                    this.signalError("InitializationError. HTTP Error code: " + (response ? response.statusCode : "Unknown"));
                 } else {
                     setTimeout(
                         this.start.bind(this)
@@ -95,7 +95,7 @@ class FFmpegJob extends events.EventEmitter {
                         this.removeAllFiles();
                         fs.mkdirSync(this.outputFolder);
                     } catch (e) {
-                        this.signalError("HLS S3 failed. Desc: " + e);
+                        this.signalError("S3Error. Desc: " + e);
                     }
                 }
             }
@@ -264,7 +264,7 @@ function buildFfmpegCommand(job) {
 
                 if (job.ffmpegErrorCount >= FFMPEG_MAX_ERRORS) {
                     log("Max initialization errors reached (ffmpeg couldn't connect)", job);
-                    job.signalError("HLS initialization failure (FFMPEG initialization). Desc: " + err);
+                    job.signalError("InitializationError (FFMPEG initialization). Desc: " + err);
                 } else {
                     log("Relaunching ffmpeg...", job);
 
@@ -282,7 +282,7 @@ function buildFfmpegCommand(job) {
                 } else {
                     log("An error occurred processing the stream, error: " + err.message, job);
                     this.status = "Errors found";
-                    job.signalError("HLS Job failed. Desc: " + err);
+                    job.signalError("JobError. Desc: " + err);
                 }
             }
         })
@@ -304,7 +304,7 @@ function buildFfmpegCommand(job) {
                     request({ uri: job.callbackUrl, headers: { "User-agent": job.userAgent }, method: "POST", json: { "id": job.id, "upcloseStreamUrl": job.upcloseStreamUrl } }, (error, response, body) => {
                         log("Calling callback to notify stream started: " + job.callbackUrl, job);
                         if (error || response.statusCode != 200) {
-                            job.signalError("HLS Callback failed. Error calling callback: " + error + ", body: " + body);
+                            job.signalError("CallbackError. Error calling callback: " + error + ", body: " + body);
                         }
                     });
                 }
