@@ -25,7 +25,7 @@ Utils.readIntConfigParam = function(envVar, defaultVal, minVal, maxVal) {
     if (envVar !== undefined && !isNaN(envVar)) {
         let tmp = parseInt(envVar);
         
-        if ((minValue === undefined || tmp >= minVal) && 
+        if ((minVal === undefined || tmp >= minVal) && 
             (maxVal === undefined || tmp <= maxVal)) {
             res = tmp;
         }
