@@ -126,6 +126,11 @@ class FFmpegJob extends events.EventEmitter {
     signalError(err) {
         this.emit('errors', err);
     }
+    
+    // Emit warning event
+    signalWarning(err) {
+        this.emit('warning', err);
+    }
 
     // mark as finished
     markAsFinished() {
@@ -301,10 +306,10 @@ function buildFfmpegCommand(job) {
                 log("Generation of HLS output files started", job);
 
                 if (job.callbackUrl !== undefined && job.callbackUrl.length > 0) {
-                    request({ uri: job.callbackUrl, headers: { "User-agent": job.userAgent }, method: "POST", json: { "id": job.id, "upcloseStreamUrl": job.upcloseStreamUrl } }, (error, response, body) => {
+                    request({ uri: job.callbackUrl, headers: { "User-agent": "HLSProxy/0.1" }, method: "POST", json: { "id": job.id, "upcloseStreamUrl": job.upcloseStreamUrl } }, (error, response, body) => {
                         log("Calling callback to notify stream started: " + job.callbackUrl, job);
                         if (error || response.statusCode != 200) {
-                            job.signalError("CallbackError. Error calling callback: " + error + ", body: " + body);
+                            job.signalWarning("CallbackError. Error calling callback: " + response.statusCode + ", body: " + JSON.stringify(body));
                         }
                     });
                 }

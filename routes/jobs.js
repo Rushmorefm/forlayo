@@ -50,13 +50,19 @@ function startJob(req, res) {
     job.on("end", function() {
         console.log("Job finished!!!");    
         delete jobs[job.id];
-    })
+    });
     
     job.on("errors", function(err) {
         console.log("Job with errors. Removing it from the list of pending jobs!!!");    
         delete jobs[job.id];
         req.ravenClient.captureMessage("JobStartError. " + err + ". Job: " + job.id);
-    })
+    });
+    
+    job.on("warning", function(err) {
+        console.log("Job with warning");    
+        delete jobs[job.id];
+        req.ravenClient.captureMessage(err + ". Job: " + job.id);
+    });
     
     job.start();
     
