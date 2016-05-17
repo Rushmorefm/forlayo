@@ -44,7 +44,7 @@ function startJob(req, res) {
     let callbackUrl = req.body.callbackUrl;
     let job = videoJobs.newJob(id, streamUrl, callbackUrl, 
         req.appConfig.OUTPUT_BASE_PATH, req.appConfig.OUTPUT_VIDEO_HLS_SEGMENT_SIZE, 
-        req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS);
+        req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS, req.appConfig.USER_AGENT);
     jobs[id] = job;
     
     job.on("end", function() {
