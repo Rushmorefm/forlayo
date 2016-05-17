@@ -44,19 +44,25 @@ function startJob(req, res) {
     let callbackUrl = req.body.callbackUrl;
     let job = videoJobs.newJob(id, streamUrl, callbackUrl, 
         req.appConfig.OUTPUT_BASE_PATH, req.appConfig.OUTPUT_VIDEO_HLS_SEGMENT_SIZE, 
-        req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS);
+        req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS, req.appConfig.USER_AGENT);
     jobs[id] = job;
     
     job.on("end", function() {
         console.log("Job finished!!!");    
         delete jobs[job.id];
-    })
+    });
     
     job.on("errors", function(err) {
         console.log("Job with errors. Removing it from the list of pending jobs!!!");    
         delete jobs[job.id];
         req.ravenClient.captureMessage("JobStartError. " + err + ". Job: " + job.id);
-    })
+    });
+    
+    job.on("warning", function(err) {
+        console.log("Job with warning");    
+        delete jobs[job.id];
+        req.ravenClient.captureMessage(err + ". Job: " + job.id);
+    });
     
     job.start();
     

@@ -15,11 +15,11 @@ var HLS_SEGMENT_FILENAME_TEMPLATE = "master.m3u8"
 
 // Retries during initialization phase (checking master.m3u8 exists)
 var INITIALIZATION_TRY_INTERVAL = 5000;
-var INITIALIZATION_MAX_ERRORS = 40;
+var INITIALIZATION_MAX_ERRORS = 80;
 
 // Retries during ffmpeg process launch 
 var FFMPEG_TRY_INTERVAL = 5000;
-var FFMPEG_MAX_ERRORS = 20;
+var FFMPEG_MAX_ERRORS = 40;
 
 // Upclose CDN Url
 var UPCLOSE_CDN_URL = "https://cdn.upclose.me/";
@@ -125,6 +125,11 @@ class FFmpegJob extends events.EventEmitter {
     // Emit error event
     signalError(err) {
         this.emit('errors', err);
+    }
+    
+    // Emit warning event
+    signalWarning(err) {
+        this.emit('warning', err);
     }
 
     // mark as finished
@@ -301,10 +306,10 @@ function buildFfmpegCommand(job) {
                 log("Generation of HLS output files started", job);
 
                 if (job.callbackUrl !== undefined && job.callbackUrl.length > 0) {
-                    request({ uri: job.callbackUrl, headers: { "User-agent": job.userAgent }, method: "POST", json: { "id": job.id, "upcloseStreamUrl": job.upcloseStreamUrl } }, (error, response, body) => {
+                    request({ uri: job.callbackUrl, headers: { "User-agent": "HLSProxy/0.1" }, method: "POST", json: { "id": job.id, "upcloseStreamUrl": job.upcloseStreamUrl } }, (error, response, body) => {
                         log("Calling callback to notify stream started: " + job.callbackUrl, job);
                         if (error || response.statusCode != 200) {
-                            job.signalError("CallbackError. Error calling callback: " + error + ", body: " + body);
+                            job.signalWarning("CallbackError. Error calling callback: " + response.statusCode + ", body: " + JSON.stringify(body));
                         }
                     });
                 }

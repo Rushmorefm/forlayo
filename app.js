@@ -59,7 +59,7 @@ class Config {
 // App configuration
 var config = new Config();
 console.log("Output base path set in " + config.OUTPUT_BASE_PATH);
-console.log("HLS Config. Max duration " + config.OUTPUT_VIDEO_MAX_SEGMENTS + " segments, Segment size: " + config.OUTPUT_VIDEO_HLS_SEGMENT_SIZE + " seconds");
+console.log("HLS Config. Version: " + config.VERSION + ", Max duration " + config.OUTPUT_VIDEO_MAX_SEGMENTS + " segments, Segment size: " + config.OUTPUT_VIDEO_HLS_SEGMENT_SIZE + " seconds");
 
 // The request handler must be the first item
 app.use(raven.middleware.express.requestHandler(sentryDSN));
