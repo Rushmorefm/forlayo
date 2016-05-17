@@ -60,7 +60,6 @@ function startJob(req, res) {
     
     job.on("warning", function(err) {
         console.log("Job with warning");    
-        delete jobs[job.id];
         req.ravenClient.captureMessage(err + ". Job: " + job.id);
     });
     

@@ -306,7 +306,7 @@ function buildFfmpegCommand(job) {
                 log("Generation of HLS output files started", job);
 
                 if (job.callbackUrl !== undefined && job.callbackUrl.length > 0) {
-                    request({ uri: job.callbackUrl, headers: { "User-agent": this.userAgent }, method: "POST", json: { "id": job.id, "upcloseStreamUrl": job.upcloseStreamUrl } }, (error, response, body) => {
+                    request({ uri: job.callbackUrl, headers: { "User-agent": job.userAgent }, method: "POST", json: { "id": job.id, "upcloseStreamUrl": job.upcloseStreamUrl } }, (error, response, body) => {
                         log("Calling callback to notify stream started: " + job.callbackUrl, job);
                         if (error || response.statusCode != 200) {
                             job.signalWarning("CallbackError. Error calling callback: " + response.statusCode + ", body: " + JSON.stringify(body));
