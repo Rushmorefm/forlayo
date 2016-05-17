@@ -15,11 +15,11 @@ var HLS_SEGMENT_FILENAME_TEMPLATE = "master.m3u8"
 
 // Retries during initialization phase (checking master.m3u8 exists)
 var INITIALIZATION_TRY_INTERVAL = 5000;
-var INITIALIZATION_MAX_ERRORS = 40;
+var INITIALIZATION_MAX_ERRORS = 80;
 
 // Retries during ffmpeg process launch 
 var FFMPEG_TRY_INTERVAL = 5000;
-var FFMPEG_MAX_ERRORS = 20;
+var FFMPEG_MAX_ERRORS = 40;
 
 // Upclose CDN Url
 var UPCLOSE_CDN_URL = "https://cdn.upclose.me/";
