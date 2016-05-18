@@ -43,7 +43,8 @@ class Config {
         }   
         
         // Parse HLS segment size (in seconds)
-        this.OUTPUT_VIDEO_HLS_SEGMENT_SIZE = utils.readIntConfigParam(process.env.hlsSegmentSize, 4, 2, 10);
+        this.OUTPUT_VIDEO_HLS_SEGMENT_SIZE = utils.readIntConfigParam(process.env.hlsSegmentSize, 4, 2, 8);
+        
 
         // Parse max number of segments. 0 means no limit 
         this.OUTPUT_VIDEO_MAX_SEGMENTS = utils.readIntConfigParam(process.env.hlsMaxSegments, 0, 0, undefined);
