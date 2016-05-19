@@ -31,7 +31,7 @@ class Config {
     
     constructor() {
         // Version
-        this.VERSION = "0.1";
+        this.VERSION = "0.2";
         
         // HLS Proxy user agent
         this.USER_AGENT = "HLSProxy/" + this.VERSION;

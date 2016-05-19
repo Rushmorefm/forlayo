@@ -51,6 +51,13 @@ class FFmpegJob extends events.EventEmitter {
         this.cmd = undefined;
         this.upcloseStreamUrl = UPCLOSE_CDN_URL + id + "/master.m3u8";
         this.userAgent = userAgent;
+        
+        if (streamUrl !== undefined) {
+            let preffix = "https://";
+            if (streamUrl.indexOf(preffix) === 0) {
+                this.streamUrl = "http://" + streamUrl.substring(preffix.length); 
+            }
+        }
     }
 
     // start an existent job
