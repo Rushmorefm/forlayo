@@ -55,12 +55,12 @@ function startJob(req, res) {
     job.on("errors", function(err) {
         console.log("Job with errors. Removing it from the list of pending jobs!!!");    
         delete jobs[job.id];
-        req.ravenClient.captureMessage("JobStartError. " + err + ". Job: " + job.id);
+        req.ravenClient.captureMessage("JobStartError. ", {extra: {"err": err, "jobId": job.id}});
     });
     
     job.on("warning", function(err) {
         console.log("Job with warning");    
-        req.ravenClient.captureMessage(err + ". Job: " + job.id);
+        req.ravenClient.captureMessage("Warning: ", {extra: {"err": err, "jobId": job.id}});
     });
     
     job.start();
@@ -125,17 +125,17 @@ function markAsDeleted(req, res) {
                 utils.responseOk(res);
             }, (err) => {
                 console.log("Job " + id + ", stream couldn't be marked as deleted");
-                req.ravenClient.captureMessage("JobStatusError. " + err + ". Job " + id + ", stream couldn't be marked as deleted");
+                req.ravenClient.captureMessage("JobStatusError. Job Delete", {extra: {"err": err, "jobId": id}});
                 utils.responseError(res, 400, err);
             });
         } else {
             console.log("Job " + id + ", can not not change status to deleted due to current status is not public");
-            req.ravenClient.captureMessage("JobStatusError. Job " + id + ", can not not change status to deleted due to current status is not public");
+            req.ravenClient.captureMessage("JobStatusError. Job Delete can not not change status to deleted due to current status is not public", {extra: {"jobId": id}});
             utils.responseError(res, 400, "Can not not change status to deleted due to current status is not public");
         }    
     }, (err) => {
         console.log("Error in markAsDeleted. " + err);
-        req.ravenClient.captureMessage("JobStatusError. Job " + id + ", marking as deleted. Error: " + err);
+        req.ravenClient.captureMessage("JobStatusError. Job marking as deleted.", {extra: {"err": err, "jobId": id}});
         utils.responseError(res, 400, err);
     }); 
 }
@@ -157,17 +157,17 @@ function markAsPrivate(req, res) {
                 utils.responseOk(res);
             }, (err) => {
                 console.log("Job " + id + ", stream couldn't be marked as private");
-                req.ravenClient.captureMessage("JobStatusError. " + err + ". Job " + id + ", stream couldn't be marked as private");
+                req.ravenClient.captureMessage("JobStatusError. Stream couldn't be marked as private", {extra: {"err": err, "jobId": id}});
                 utils.responseError(res, 400, err);
             });
         } else {
             console.log("Job " + id + ", can not not change status to private due to current status is not public");
-            req.ravenClient.captureMessage("JobStatusError. Job " + id + ", an not not change status to private due to current status is not public");
+            req.ravenClient.captureMessage("JobStatusError. Can not not change status to private due to current status is not public", {extra: {"jobId": id}});
             utils.responseError(res, 400, "Can not not change status to private due to current status is not public");
         }    
     }, (err) => {
         console.log("Error in markAsPrivate. " + err);
-        req.ravenClient.captureMessage("JobStatusError. Job " + id + ", marking as private. Error: " + err);
+        req.ravenClient.captureMessage("JobStatusError. Marking as private.", {extra: {"err": err, "jobId": id}});
         utils.responseError(res, 400, err);
     });
 }
@@ -189,18 +189,18 @@ function markAsRestored(req, res) {
                 utils.responseOk(res);
             }, (err) => {
                 console.log("JobStatusError. Job " + id + ", stream couldn't be restored");
-                req.ravenClient.captureMessage("JobStatusError. " + err + ". Job " + id + ", stream couldn't be restored");
+                req.ravenClient.captureMessage("JobStatusError. Stream couldn't be restored", {extra: {"err": err, "jobId": id}});
                 utils.responseError(res, 400, err);
             });
             
         } else {
             console.log("Job " + id + ", can not not change status to restored due to current status is neither private nor deleted");
-            req.ravenClient.captureMessage("JobStatusError. Job " + id + ", can not not change status to restored due to current status is neither private nor deleted");
+            req.ravenClient.captureMessage("JobStatusError. Can not not change status to restored due to current status is neither private nor deleted", {extra: {"jobId": id}});
             utils.responseError(res, 400, "Can not not change status to restored due to current status is neither private nor deleted");
         }    
     }, (err) => {
         console.log("Error in markAsRestoredin. " + err);
-        req.ravenClient.captureMessage("JobStatusError. Job" + id + ", marking as restored. Error: " + err);
+        req.ravenClient.captureMessage("JobStatusError. Marking as restored.", {extra: {"err": err, "jobId": id}});
         utils.responseError(res, 400, err);
     });
 }
@@ -214,7 +214,7 @@ function getStatus(req, res) {
     .then((status) => {
         utils.responseOk(res, status);
     }, (err) => {
-        req.ravenClient.captureMessage("JobStatusError. Job " + id + ", while getting status. Error: " + err);
+        req.ravenClient.captureMessage("JobStatusError. While getting status.", {extra: {"err": err, "jobId": id}});
         utils.responseError(res, 404, err);
     });
 }
