@@ -78,7 +78,7 @@ class FFmpegJob extends events.EventEmitter {
                 this.initializationErrorCount++;
                 if (this.initializationErrorCount >= INITIALIZATION_MAX_ERRORS) {
                     log("Stream is down after max retries. Finishing it", this);
-                    this.signalError("InitializationError. HTTP Error code: " + (response ? response.statusCode : "Unknown"));
+                    this.signalError("InitializationError. HTTP Error code: " + (response ? response.statusCode : "Unknown"), null);
                 } else {
                     setTimeout(
                         this.start.bind(this)
@@ -102,7 +102,7 @@ class FFmpegJob extends events.EventEmitter {
                         this.removeAllFiles();
                         fs.mkdirSync(this.outputFolder);
                     } catch (e) {
-                        this.signalError("S3Error. Desc: " + e);
+                        this.signalError("S3Error", e);
                     }
                 }
             }
@@ -130,8 +130,8 @@ class FFmpegJob extends events.EventEmitter {
     }
 
     // Emit error event
-    signalError(err) {
-        this.emit('errors', err);
+    signalError(err, desc) {
+        this.emit('errors', err, desc);
     }
     
     // Emit warning event
@@ -276,7 +276,7 @@ function buildFfmpegCommand(job) {
 
                 if (job.ffmpegErrorCount >= FFMPEG_MAX_ERRORS) {
                     log("Max initialization errors reached (ffmpeg couldn't connect)", job);
-                    job.signalError("InitializationFFMPEGError. Desc: " + err);
+                    job.signalError("InitializationFFMPEGError", err);
                 } else {
                     log("Relaunching ffmpeg...", job);
 
@@ -294,7 +294,7 @@ function buildFfmpegCommand(job) {
                 } else {
                     log("An error occurred processing the stream, error: " + err.message, job);
                     this.status = "Errors found";
-                    job.signalError("JobError. Desc: " + err);
+                    job.signalError("JobError", err);
                 }
             }
         })
