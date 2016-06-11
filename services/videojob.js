@@ -262,7 +262,6 @@ function buildFfmpegCommand(job) {
         ])
         .output(job.manifestFile)
         .on('error', function (err) {
-            log("FFMPEG Error: " + err, job);
             // Process didn't stop, let's give some time
             // to the source to generate HLS stream...
             if (!job.processStarted) {
@@ -292,7 +291,7 @@ function buildFfmpegCommand(job) {
                     job.status = "Finished";
                     job.signalEnd();
                 } else {
-                    log("An error occurred processing the stream, error: " + err.message, job);
+                    log("An error occurred processing the stream, error: " + err, job);
                     this.status = "Errors found";
                     job.signalError("JobError", err);
                 }

@@ -54,13 +54,13 @@ function startJob(req, res) {
     
     job.on("errors", function(err, desc) {
         console.log("Job with errors. Removing it from the list of pending jobs!!!");    
+        req.ravenClient.captureMessage(err, {extra: {"err": desc, "jobId": job.id, "hlsProcessed": job.processStarted}});
         delete jobs[job.id];
-        req.ravenClient.captureMessage(err, {extra: {"err": desc, "jobId": job.id}});
     });
     
     job.on("warning", function(err) {
         console.log("Job with warning");    
-        req.ravenClient.captureMessage("Warning: ", {extra: {"err": err, "jobId": job.id}});
+        req.ravenClient.captureMessage("Warning: ", {extra: {"err": err, "jobId": job.id, "hlsProcessed": job.processStarted}});
     });
     
     job.start();
