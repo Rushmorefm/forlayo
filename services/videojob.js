@@ -36,6 +36,8 @@ class FFmpegJob extends events.EventEmitter {
 
         this.id = id;
         this.streamUrl = streamUrl;
+        this.startDate = new Date();
+        this.liveDelay = 0;
         this.callbackUrl = callbackUrl;
         this.basePath = basePath;
         this.outputFolder = basePath + "/" + this.id;
@@ -310,9 +312,11 @@ function buildFfmpegCommand(job) {
         .on('progress', function (progress) {
             if (!job.processStarted) {
                 log("Generation of HLS output files started", job);
-
+                var endDate = new Date();
+                job.liveDelay = 2 * (endDate - job.startDate);
+                log("Live delay: " + job.liveDelay + " ms", job);
                 if (job.callbackUrl !== undefined && job.callbackUrl.length > 0) {
-                    request({ uri: job.callbackUrl, headers: { "User-agent": job.userAgent }, method: "POST", json: { "id": job.id, "upcloseStreamUrl": job.upcloseStreamUrl } }, (error, response, body) => {
+                    request({ uri: job.callbackUrl, headers: { "User-agent": job.userAgent }, method: "POST", json: { "id": job.id, "upcloseStreamUrl": job.upcloseStreamUrl, "liveDelay": job.liveDelay / 1000 } }, (error, response, body) => {
                         log("Calling callback to notify stream started: " + job.callbackUrl, job);
                         if (error || response.statusCode != 200) {
                             job.signalWarning("CallbackError. Error calling callback: " + response.statusCode + ", body: " + JSON.stringify(body));
