@@ -115,7 +115,7 @@ function markAsDeleted(req, res) {
     
     getStatusInternal(id, req, res)
     .then((status) => {
-        if (status === videoJobs.STATUS_PUBLIC) {
+        if (status !== videoJobs.STATUS_DELETED && status !== videoJobs.STATUS_RUNNING) {
             let job = videoJobs.newJob(id, "", "", req.appConfig.OUTPUT_BASE_PATH, 
                 req.appConfig.OUTPUT_VIDEO_HLS_SEGMENT_SIZE, 
                 req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS,
@@ -129,9 +129,9 @@ function markAsDeleted(req, res) {
                 utils.responseError(res, 400, err);
             });
         } else {
-            console.log("Job " + id + ", can not not change status to deleted due to current status is not public");
-            req.ravenClient.captureMessage("JobStatusError. Job Delete can not not change status to deleted due to current status is not public", {extra: {"jobId": id}});
-            utils.responseError(res, 400, "Can not not change status to deleted due to current status is not public");
+            console.log("Job " + id + ", can not not change status to deleted due to current status is " + status);
+            req.ravenClient.captureMessage("JobStatusError. Job Delete can not not change status to deleted due to current status is " + status, {extra: {"jobId": id}});
+            utils.responseError(res, 400, "Can not not change status to deleted due to current status is " + status);
         }    
     }, (err) => {
         console.log("Error in markAsDeleted. " + err);
@@ -147,7 +147,7 @@ function markAsPrivate(req, res) {
    
     getStatusInternal(id, req, res)
     .then((status) => {
-        if (status === videoJobs.STATUS_PUBLIC) {
+        if (status !== videoJobs.STATUS_PRIVATE && status !== videoJobs.STATUS_RUNNING) {
             let job = videoJobs.newJob(id, "", "", req.appConfig.OUTPUT_BASE_PATH, 
                 req.appConfig.OUTPUT_VIDEO_HLS_SEGMENT_SIZE, 
                 req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS,
@@ -161,9 +161,9 @@ function markAsPrivate(req, res) {
                 utils.responseError(res, 400, err);
             });
         } else {
-            console.log("Job " + id + ", can not not change status to private due to current status is not public");
-            req.ravenClient.captureMessage("JobStatusError. Can not not change status to private due to current status is not public", {extra: {"jobId": id}});
-            utils.responseError(res, 400, "Can not not change status to private due to current status is not public");
+            console.log("Job " + id + ", can not not change status to private due to current status is " + status);
+            req.ravenClient.captureMessage("JobStatusError. Can not not change status to private due to current status is " + status, {extra: {"jobId": id}});
+            utils.responseError(res, 400, "Can not not change status to private due to current status is " + status);
         }    
     }, (err) => {
         console.log("Error in markAsPrivate. " + err);
