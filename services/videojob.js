@@ -156,7 +156,6 @@ class FFmpegJob extends events.EventEmitter {
         return new Promise((resolve, reject) => {
             utils.readNLine(this.manifestFile, 1)
                 .then((line) => {
-                    console.log("Line: " + line);
                     if (line != null && line.indexOf("#type:") === 0) {
                         resolve(line.split(":")[1]);
                     } else {
