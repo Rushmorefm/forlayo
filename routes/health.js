@@ -14,7 +14,7 @@ function checkHealth(req, res, next) {
   fs.isEmpty(req.appConfig.HEALTH_PATH, (empty) => {
     if (empty) {
         console.log("S3 Filesystem is not accessible!. Path: " + req.appConfig.HEALTH_PATH);
-        req.ravenClient.captureMessage("HealthError. Path: " + req.appConfig.HEALTH_PATH);
+        req.ravenClient.captureMessage("HealthError. File System not accessible. Path: " + req.appConfig.HEALTH_PATH);
         utils.responseError(res, 500, "Error");  
     } else {
         utils.responseOk(res);  
