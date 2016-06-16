@@ -12,7 +12,7 @@ var jobs = {};
 // Return the list of jobs
 function listJobs(req, res) {
     let result = Object.keys(jobs).map((key, index) => {
-        return {"id":jobs[key].id, "streamUrl": jobs[key].streamUrl, "upcloseStreamUrl": jobs[key].upcloseStreamUrl, "status": jobs[key].status};
+        return {"id":jobs[key].id, "streamUrl": jobs[key].streamUrl, "upcloseStreamUrl": jobs[key].upcloseStreamUrl, "status": jobs[key].status, "liveDelay": jobs[key].liveDelay};
     });
     utils.responseOk(res, result);
 }
