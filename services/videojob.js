@@ -24,6 +24,9 @@ var FFMPEG_MAX_ERRORS = 40;
 // Upclose CDN Url
 var UPCLOSE_CDN_URL = "https://cdn.upclose.me/";
 
+// Upclose endpoing to check status
+var UPCLOSE_STREAM_STATUS_ENDPOINT = "https://api.upclose.me/broadcasts/";
+
 // Filename where we will backup the stream master.m3u8
 const HLS_MASTER_BACKUP_FILENAME = "/master.bck.m3u8";
 const HLS_MASTER_DELETED = "/deleted/deleted.m3u8";
@@ -126,13 +129,26 @@ class FFmpegJob extends events.EventEmitter {
         }
     }
 
+    updateStreamStatus() {
+        var apiUrl = UPCLOSE_STREAM_STATUS_ENDPOINT + this.id;
+        request({ uri: apiUrl, headers: { "User-agent": job.userAgent }, method: "GET"}, (error, response, body) => {
+                    log("Updating stream status", job);
+                    if (response.statusCode == 404) {
+                        log("Update status returned 404. Marking stream as private", job);
+                        job.markAsPrivate();
+                    }
+                });
+    }
+    
     // Emit end event
     signalEnd() {
+        updateStreamStatus();
         this.emit('end');
     }
 
     // Emit error event
     signalError(err, desc) {
+        updateStreamStatus();
         this.emit('errors', err, desc);
     }
     
@@ -299,7 +315,6 @@ function buildFfmpegCommand(job) {
             }
         })
         .on('end', function () {
-
             if (!job.markedAsEnded) {
                 log("Finished without being signaled as finished", job);
             } else {
