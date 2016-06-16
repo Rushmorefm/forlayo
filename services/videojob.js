@@ -142,13 +142,13 @@ class FFmpegJob extends events.EventEmitter {
     
     // Emit end event
     signalEnd() {
-        updateStreamStatus();
+        this.updateStreamStatus();
         this.emit('end');
     }
 
     // Emit error event
     signalError(err, desc) {
-        updateStreamStatus();
+        this.updateStreamStatus();
         this.emit('errors', err, desc);
     }
     
