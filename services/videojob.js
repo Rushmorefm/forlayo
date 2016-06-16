@@ -131,11 +131,11 @@ class FFmpegJob extends events.EventEmitter {
 
     updateStreamStatus() {
         var apiUrl = UPCLOSE_STREAM_STATUS_ENDPOINT + this.id;
-        request({ uri: apiUrl, headers: { "User-agent": job.userAgent }, method: "GET"}, (error, response, body) => {
-                    log("Updating stream status", job);
+        request({ uri: apiUrl, headers: { "User-agent": this.userAgent }, method: "GET"}, (error, response, body) => {
+                    log("Updating stream status", this);
                     if (response.statusCode == 404) {
-                        log("Update status returned 404. Marking stream as private", job);
-                        job.markAsPrivate();
+                        log("Update status returned 404. Marking stream as private", this);
+                        this.markAsPrivate();
                     }
                 });
     }
