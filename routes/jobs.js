@@ -130,7 +130,7 @@ function markAsDeleted(req, res) {
             });
         } else {
             console.log("Job " + id + ", can not not change status to deleted due to current status is " + status);
-            req.ravenClient.captureMessage("JobStatusError. Job Delete can not not change status to deleted due to current status is " + status, {extra: {"jobId": id}});
+            //req.ravenClient.captureMessage("JobStatusError. Job Delete can not not change status to deleted due to current status is " + status, {extra: {"jobId": id}});
             utils.responseError(res, 400, "Can not not change status to deleted due to current status is " + status);
         }    
     }, (err) => {
@@ -162,7 +162,7 @@ function markAsPrivate(req, res) {
             });
         } else {
             console.log("Job " + id + ", can not not change status to private due to current status is " + status);
-            req.ravenClient.captureMessage("JobStatusError. Can not not change status to private due to current status is " + status, {extra: {"jobId": id}});
+            //req.ravenClient.captureMessage("JobStatusError. Can not not change status to private due to current status is " + status, {extra: {"jobId": id}});
             utils.responseError(res, 400, "Can not not change status to private due to current status is " + status);
         }    
     }, (err) => {
@@ -195,7 +195,7 @@ function markAsRestored(req, res) {
             
         } else {
             console.log("Job " + id + ", can not not change status to restored due to current status is neither private nor deleted");
-            req.ravenClient.captureMessage("JobStatusError. Can not not change status to restored due to current status is neither private nor deleted", {extra: {"jobId": id}});
+            //req.ravenClient.captureMessage("JobStatusError. Can not not change status to restored due to current status is neither private nor deleted", {extra: {"jobId": id}});
             utils.responseError(res, 400, "Can not not change status to restored due to current status is neither private nor deleted");
         }    
     }, (err) => {
