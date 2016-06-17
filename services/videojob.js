@@ -133,7 +133,7 @@ class FFmpegJob extends events.EventEmitter {
         var apiUrl = UPCLOSE_STREAM_STATUS_ENDPOINT + this.id;
         var delay = this.liveDelay * 2;
         if (delay == 0) {
-            delay = 60;
+            delay = 60000;
         }
         var self = this;
         setTimeout(function () {
@@ -144,7 +144,7 @@ class FFmpegJob extends events.EventEmitter {
                         self.markAsPrivate();
                     }
                 });
-            }, delay * 1000);
+            }, delay);
     }
     
     // Emit end event
