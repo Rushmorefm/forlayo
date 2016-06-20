@@ -68,6 +68,7 @@ class Config {
 var config = new Config();
 console.log("Output base path set in " + config.OUTPUT_BASE_PATH);
 console.log("HLS Config. Version: " + config.VERSION + ", Max duration " + config.OUTPUT_VIDEO_MAX_SEGMENTS + " segments, Segment size: " + config.OUTPUT_VIDEO_HLS_SEGMENT_SIZE + " seconds");
+console.log("Upclose API EndPoint: " + config.UPCLOSE_API_BASE_URL);
 
 // The request handler must be the first item
 app.use(raven.middleware.express.requestHandler(sentryDSN));
