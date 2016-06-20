@@ -31,7 +31,7 @@ class Config {
     
     constructor() {
         // Version
-        this.VERSION = "0.2";
+        this.VERSION = "0.3";
         
         // HLS Proxy user agent
         this.USER_AGENT = "HLSProxy/" + this.VERSION;
@@ -54,6 +54,13 @@ class Config {
 
         // Folder to check S3 health 
         this.HEALTH_PATH = this.OUTPUT_BASE_PATH + "/health"
+
+        // Upclose API Base
+        this.UPCLOSE_API_BASE_URL = process.env.upcloseAPI;
+        if (this.UPCLOSE_API_BASE_URL === undefined || this.UPCLOSE_API_BASE_URL.length == 0) {
+            this.UPCLOSE_API_BASE_URL = "https://api.upclose.me";   
+        }   
+
     }
 }
 

@@ -44,7 +44,7 @@ function startJob(req, res) {
     let callbackUrl = req.body.callbackUrl;
     let job = videoJobs.newJob(id, streamUrl, callbackUrl, 
         req.appConfig.OUTPUT_BASE_PATH, req.appConfig.OUTPUT_VIDEO_HLS_SEGMENT_SIZE, 
-        req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS, req.appConfig.USER_AGENT);
+        req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS, req.appConfig.USER_AGENT, req.appConfig.UPCLOSE_API_BASE_URL);
     jobs[id] = job;
     
     job.on("end", function() {
@@ -83,7 +83,7 @@ function deleteJob(req, res) {
       job = videoJobs.newJob(id, "", "", req.appConfig.OUTPUT_BASE_PATH, 
         req.appConfig.OUTPUT_VIDEO_HLS_SEGMENT_SIZE, 
         req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS,
-        req.appConfig.USER_AGENT);
+        req.appConfig.USER_AGENT, req.appConfig.UPCLOSE_API_BASE_URL);
   }
   
   job.removeAllFiles();
@@ -119,7 +119,7 @@ function markAsDeleted(req, res) {
             let job = videoJobs.newJob(id, "", "", req.appConfig.OUTPUT_BASE_PATH, 
                 req.appConfig.OUTPUT_VIDEO_HLS_SEGMENT_SIZE, 
                 req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS,
-                req.appConfig.USER_AGENT);
+                req.appConfig.USER_AGENT, req.appConfig.UPCLOSE_API_BASE_URL);
             job.markAsDeleted()
             .then (() => {
                 utils.responseOk(res);
@@ -151,7 +151,7 @@ function markAsPrivate(req, res) {
             let job = videoJobs.newJob(id, "", "", req.appConfig.OUTPUT_BASE_PATH, 
                 req.appConfig.OUTPUT_VIDEO_HLS_SEGMENT_SIZE, 
                 req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS,
-                req.appConfig.USER_AGENT);
+                req.appConfig.USER_AGENT, req.appConfig.UPCLOSE_API_BASE_URL);
             job.markAsPrivate()
             .then (() => {
                 utils.responseOk(res);
@@ -183,7 +183,7 @@ function markAsRestored(req, res) {
             let job = videoJobs.newJob(id, "", "", req.appConfig.OUTPUT_BASE_PATH, 
                 req.appConfig.OUTPUT_VIDEO_HLS_SEGMENT_SIZE, 
                 req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS,
-                req.appConfig.USER_AGENT);
+                req.appConfig.USER_AGENT, req.appConfig.UPCLOSE_API_BASE_URL);
             job.markAsRestored()
             .then (() => {
                 utils.responseOk(res);
@@ -230,7 +230,7 @@ function getStatusInternal(id, req, res) {
             job = videoJobs.newJob(id, "", "", req.appConfig.OUTPUT_BASE_PATH, 
                 req.appConfig.OUTPUT_VIDEO_HLS_SEGMENT_SIZE, 
                 req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS,
-                req.appConfig.USER_AGENT);    
+                req.appConfig.USER_AGENT, req.appConfig.UPCLOSE_API_BASE_URL);    
                     
             job.getStatus().
             then ((status) => {

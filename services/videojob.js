@@ -25,7 +25,7 @@ var FFMPEG_MAX_ERRORS = 40;
 var UPCLOSE_CDN_URL = "https://cdn.upclose.me/";
 
 // Upclose endpoing to check status
-var UPCLOSE_STREAM_STATUS_ENDPOINT = "https://api.upclose.me/broadcasts/";
+var UPCLOSE_STREAM_STATUS_ENDPOINT = "/broadcasts/";
 
 // Filename where we will backup the stream master.m3u8
 const HLS_MASTER_BACKUP_FILENAME = "/master.bck.m3u8";
@@ -34,7 +34,7 @@ const HLS_MASTER_PRIVATE = "/private/private.m3u8";
 
 // Constructor
 class FFmpegJob extends events.EventEmitter {
-    constructor(id, streamUrl, callbackUrl, basePath, hlsSegmentSize, hlsMaxSegments, userAgent) {
+    constructor(id, streamUrl, callbackUrl, basePath, hlsSegmentSize, hlsMaxSegments, userAgent, upcloseAPIBaseURL) {
         super();
 
         this.id = id;
@@ -56,6 +56,7 @@ class FFmpegJob extends events.EventEmitter {
         this.cmd = undefined;
         this.upcloseStreamUrl = UPCLOSE_CDN_URL + id + "/master.m3u8";
         this.userAgent = userAgent;
+        this.upcloseAPIBaseURL = upcloseAPIBaseURL;
         
         if (streamUrl !== undefined) {
             let preffix = "https://";
@@ -130,7 +131,12 @@ class FFmpegJob extends events.EventEmitter {
     }
 
     updateStreamStatus() {
-        var apiUrl = UPCLOSE_STREAM_STATUS_ENDPOINT + this.id;
+        // If process even didn't started, don't do anything
+        if (!this.processStarted) {
+            return;
+        }
+
+        var apiUrl = this.upcloseAPIBaseURL + UPCLOSE_STREAM_STATUS_ENDPOINT + this.id;
         var delay = this.liveDelay * 2;
         if (delay == 0) {
             delay = 60000;
@@ -266,8 +272,8 @@ FFmpegJobs.STATUS_DELETED = "deleted";
 
 
 // Create a new ffmpeg job
-FFmpegJobs.newJob = function (id, streamUrl, callbackUrl, basePath, hlsSegmentSize, hlsMaxSegments, userAgent) {
-    let job = new FFmpegJob(id, streamUrl, callbackUrl, basePath, hlsSegmentSize, hlsMaxSegments, userAgent);
+FFmpegJobs.newJob = function (id, streamUrl, callbackUrl, basePath, hlsSegmentSize, hlsMaxSegments, userAgent, upcloseAPIBaseURL) {
+    let job = new FFmpegJob(id, streamUrl, callbackUrl, basePath, hlsSegmentSize, hlsMaxSegments, userAgent, upcloseAPIBaseURL);
 
     buildFfmpegCommand(job);
 
