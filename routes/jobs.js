@@ -51,7 +51,7 @@ function startJob(req, res) {
     });
     
     job.on("errors", function(err, desc) {
-        console.log("Job with errors. Removing it from the list of pending jobs!!!. Job Id: " + job.id);    
+        console.log("Job with errors. Removing it from the list of pending jobs!!!. Job Id: " + job.id + ". Err: " + err + ", Desc: " + desc);    
         req.ravenClient.captureMessage(err, {extra: {"err": desc, "jobId": job.id, "hlsProcessed": job.processStarted}});
         delete jobs[job.id];
     });
