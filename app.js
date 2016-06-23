@@ -61,6 +61,11 @@ class Config {
             this.UPCLOSE_API_BASE_URL = "https://api.upclose.me";   
         }   
 
+         // Upclose CDN
+        this.UPCLOSE_CDN_URL = process.env.upcloseCDN;
+        if (this.UPCLOSE_CDN_URL === undefined || this.UPCLOSE_CDN_URL.length == 0) {
+            this.UPCLOSE_CDN_URL = "https://cdn.upclose.me/";  
+        }
     }
 }
 
@@ -69,6 +74,7 @@ var config = new Config();
 console.log("Output base path set in " + config.OUTPUT_BASE_PATH);
 console.log("HLS Config. Version: " + config.VERSION + ", Max duration " + config.OUTPUT_VIDEO_MAX_SEGMENTS + " segments, Segment size: " + config.OUTPUT_VIDEO_HLS_SEGMENT_SIZE + " seconds");
 console.log("Upclose API EndPoint: " + config.UPCLOSE_API_BASE_URL);
+console.log("Upclose CDN: " + config.UPCLOSE_CDN_URL);
 
 // The request handler must be the first item
 app.use(raven.middleware.express.requestHandler(sentryDSN));

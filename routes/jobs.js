@@ -42,9 +42,7 @@ function startJob(req, res) {
         }
     }
     let callbackUrl = req.body.callbackUrl;
-    let job = videoJobs.newJob(id, streamUrl, callbackUrl, 
-        req.appConfig.OUTPUT_BASE_PATH, req.appConfig.OUTPUT_VIDEO_HLS_SEGMENT_SIZE, 
-        req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS, req.appConfig.USER_AGENT, req.appConfig.UPCLOSE_API_BASE_URL);
+    let job = videoJobs.newJob(id, streamUrl, callbackUrl, req.appConfig);
     jobs[id] = job;
     
     job.on("end", function() {
@@ -80,10 +78,7 @@ function deleteJob(req, res) {
       console.log("Stopped job Id: " + id);
       job.stop();   
   } else {
-      job = videoJobs.newJob(id, "", "", req.appConfig.OUTPUT_BASE_PATH, 
-        req.appConfig.OUTPUT_VIDEO_HLS_SEGMENT_SIZE, 
-        req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS,
-        req.appConfig.USER_AGENT, req.appConfig.UPCLOSE_API_BASE_URL);
+      job = videoJobs.newJob(id, "", "", req.appConfig);
   }
   
   job.removeAllFiles();
@@ -116,10 +111,7 @@ function markAsDeleted(req, res) {
     getStatusInternal(id, req, res)
     .then((status) => {
         if (status !== videoJobs.STATUS_DELETED && status !== videoJobs.STATUS_RUNNING) {
-            let job = videoJobs.newJob(id, "", "", req.appConfig.OUTPUT_BASE_PATH, 
-                req.appConfig.OUTPUT_VIDEO_HLS_SEGMENT_SIZE, 
-                req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS,
-                req.appConfig.USER_AGENT, req.appConfig.UPCLOSE_API_BASE_URL);
+            let job = videoJobs.newJob(id, "", "", req.appConfig);
             job.markAsDeleted()
             .then (() => {
                 utils.responseOk(res);
@@ -148,10 +140,7 @@ function markAsPrivate(req, res) {
     getStatusInternal(id, req, res)
     .then((status) => {
         if (status !== videoJobs.STATUS_PRIVATE && status !== videoJobs.STATUS_RUNNING) {
-            let job = videoJobs.newJob(id, "", "", req.appConfig.OUTPUT_BASE_PATH, 
-                req.appConfig.OUTPUT_VIDEO_HLS_SEGMENT_SIZE, 
-                req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS,
-                req.appConfig.USER_AGENT, req.appConfig.UPCLOSE_API_BASE_URL);
+            let job = videoJobs.newJob(id, "", "", req.appConfig);
             job.markAsPrivate()
             .then (() => {
                 utils.responseOk(res);
@@ -180,10 +169,7 @@ function markAsRestored(req, res) {
     getStatusInternal(id, req, res)
     .then((status) => {
         if (status === videoJobs.STATUS_PRIVATE || status === videoJobs.STATUS_DELETED) {
-            let job = videoJobs.newJob(id, "", "", req.appConfig.OUTPUT_BASE_PATH, 
-                req.appConfig.OUTPUT_VIDEO_HLS_SEGMENT_SIZE, 
-                req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS,
-                req.appConfig.USER_AGENT, req.appConfig.UPCLOSE_API_BASE_URL);
+            let job = videoJobs.newJob(id, "", "", req.appConfig);
             job.markAsRestored()
             .then (() => {
                 utils.responseOk(res);
@@ -227,10 +213,7 @@ function getStatusInternal(id, req, res) {
             // If we have a reference to the job,then it is running
             resolve(videoJobs.STATUS_RUNNING);
         } else {
-            job = videoJobs.newJob(id, "", "", req.appConfig.OUTPUT_BASE_PATH, 
-                req.appConfig.OUTPUT_VIDEO_HLS_SEGMENT_SIZE, 
-                req.appConfig.OUTPUT_VIDEO_MAX_SEGMENTS,
-                req.appConfig.USER_AGENT, req.appConfig.UPCLOSE_API_BASE_URL);    
+            job = videoJobs.newJob(id, "", "", req.appConfig);    
                     
             job.getStatus().
             then ((status) => {

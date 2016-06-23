@@ -21,9 +21,6 @@ var INITIALIZATION_MAX_ERRORS = 80;
 var FFMPEG_TRY_INTERVAL = 5000;
 var FFMPEG_MAX_ERRORS = 40;
 
-// Upclose CDN Url
-var UPCLOSE_CDN_URL = "https://cdn.upclose.me/";
-
 // Upclose endpoing to check status
 var UPCLOSE_STREAM_STATUS_ENDPOINT = "/broadcasts/";
 
@@ -34,7 +31,7 @@ const HLS_MASTER_PRIVATE = "/private/private.m3u8";
 
 // Constructor
 class FFmpegJob extends events.EventEmitter {
-    constructor(id, streamUrl, callbackUrl, basePath, hlsSegmentSize, hlsMaxSegments, userAgent, upcloseAPIBaseURL) {
+    constructor(id, streamUrl, callbackUrl, config) {
         super();
 
         this.id = id;
@@ -42,21 +39,21 @@ class FFmpegJob extends events.EventEmitter {
         this.startDate = new Date();
         this.liveDelay = 0;
         this.callbackUrl = callbackUrl;
-        this.basePath = basePath;
-        this.outputFolder = basePath + "/" + this.id;
+        this.basePath = config.OUTPUT_BASE_PATH;
+        this.outputFolder = this.basePath + "/" + this.id;
         this.manifestFile = this.outputFolder + "/" + HLS_SEGMENT_FILENAME_TEMPLATE;
         this.status = "initialized";
         this.markedAsEnded = false;
         this.markedAsStopped = false;
         this.initializationErrorCount = 0;
         this.ffmpegErrorCount = 0;
-        this.hlsSegmentSize = hlsSegmentSize;
-        this.hlsMaxSegments = hlsMaxSegments;
+        this.hlsSegmentSize = config.OUTPUT_VIDEO_HLS_SEGMENT_SIZE;
+        this.hlsMaxSegments = config.OUTPUT_VIDEO_MAX_SEGMENTS;
         this.processStarted = false;
         this.cmd = undefined;
-        this.upcloseStreamUrl = UPCLOSE_CDN_URL + id + "/master.m3u8";
-        this.userAgent = userAgent;
-        this.upcloseAPIBaseURL = upcloseAPIBaseURL;
+        this.upcloseStreamUrl = config.UPCLOSE_CDN_URL + "/" + id + "/master.m3u8";
+        this.userAgent = config.USER_AGENT;
+        this.upcloseAPIBaseURL = config.UPCLOSE_API_BASE_URL;
         
         if (streamUrl !== undefined) {
             let preffix = "https://";
@@ -272,8 +269,8 @@ FFmpegJobs.STATUS_DELETED = "deleted";
 
 
 // Create a new ffmpeg job
-FFmpegJobs.newJob = function (id, streamUrl, callbackUrl, basePath, hlsSegmentSize, hlsMaxSegments, userAgent, upcloseAPIBaseURL) {
-    let job = new FFmpegJob(id, streamUrl, callbackUrl, basePath, hlsSegmentSize, hlsMaxSegments, userAgent, upcloseAPIBaseURL);
+FFmpegJobs.newJob = function (id, streamUrl, callbackUrl, config) {
+    let job = new FFmpegJob(id, streamUrl, callbackUrl, config);
 
     buildFfmpegCommand(job);
 
