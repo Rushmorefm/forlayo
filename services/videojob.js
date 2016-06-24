@@ -133,18 +133,42 @@ class FFmpegJob extends events.EventEmitter {
             return;
         }
 
+        let self = this;
+        // Mark stream as finished in case it wasn't
+        fs.readFile(self.manifestFile, {encoding: 'utf-8'}, function(err, data) {
+            if (!err) {
+                if (data.indexOf("#EXT-X-ENDLIST") < 0) {
+                    data += "#EXT-X-ENDLIST\n";
+                    console.log("Stream finished without being marked as vod. Marking it");
+                    fs.writeFile(self.manifestFile, data, function (err) {
+                        // do nothing
+                    });
+                }
+            }
+        });
+
         var apiUrl = this.upcloseAPIBaseURL + UPCLOSE_STREAM_STATUS_ENDPOINT + this.id;
         var delay = this.liveDelay * 2;
         if (delay == 0) {
             delay = 60000;
         }
-        var self = this;
+
         setTimeout(function () {
             request({ uri: apiUrl, headers: { "User-agent": self.userAgent }, method: "GET"}, (error, response, body) => {
                     log("Updating stream status", self);
                     if (response.statusCode == 404) {
                         log("Update status returned 404. Marking stream as private", self);
-                        self.markAsPrivate();
+                        
+                        self.getStatus()
+                        .then((status) => {
+                            if (status !== FFmpegJobs.STATUS_PRIVATE) {
+                                self.markAsPrivate();
+                            }    
+                        }, (err) => {
+                            console.log("Error in markAsPrivate. " + err);
+                            req.ravenClient.captureMessage("JobStatusError. Marking as private.", {extra: {"err": err, "jobId": id}});
+                        });
+                        
                     }
                 });
             }, delay);
@@ -194,13 +218,24 @@ class FFmpegJob extends events.EventEmitter {
     }
 
     backupMasterFile() {
+        let self = this;
         return new Promise( (resolve, reject) => {
-            let dst = this.outputFolder + HLS_MASTER_BACKUP_FILENAME;
-            fsextra.copy(this.manifestFile, dst, { replace: true }, function (err) {
-                if (err) {
-                    reject(err);
+            fs.readFile(self.manifestFile, {encoding: 'utf-8'}, function(err, data) {
+                if (!err) {
+                    if (data.indexOf("#type:") < 0) {
+                        let dst = self.outputFolder + HLS_MASTER_BACKUP_FILENAME;
+                        fs.writeFile(dst, data, function (err) {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve();
+                            }
+                        });
+                    } else {
+                        reject("Couldn't backup the manifest file. Source is not the master file!");
+                    }
                 } else {
-                    resolve();
+                    reject(err);
                 }
             });
         });
