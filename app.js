@@ -64,7 +64,7 @@ class Config {
          // Upclose CDN
         this.UPCLOSE_CDN_URL = process.env.upcloseCDN;
         if (this.UPCLOSE_CDN_URL === undefined || this.UPCLOSE_CDN_URL.length == 0) {
-            this.UPCLOSE_CDN_URL = "https://cdn.upclose.me/";  
+            this.UPCLOSE_CDN_URL = "https://cdn.upclose.me";  
         }
     }
 }
