@@ -74,7 +74,7 @@ class FFmpegJob extends events.EventEmitter {
                 return;
             }
 
-            if (!error && response.statusCode == 200) {
+            if (!error && response && response.statusCode == 200) {
                 log("Stream is up! Starting it....", this);
                 this.internalStart();
             } else {
@@ -156,7 +156,7 @@ class FFmpegJob extends events.EventEmitter {
         setTimeout(function () {
             request({ uri: apiUrl, headers: { "User-agent": self.userAgent }, method: "GET"}, (error, response, body) => {
                     log("Updating stream status", self);
-                    if (response.statusCode == 404) {
+                    if (response && response.statusCode == 404) {
                         log("Update status returned 404. Marking stream as private", self);
                         
                         self.getStatus()
@@ -377,7 +377,7 @@ function buildFfmpegCommand(job) {
                 if (job.callbackUrl !== undefined && job.callbackUrl.length > 0) {
                     request({ uri: job.callbackUrl, headers: { "User-agent": job.userAgent }, method: "POST", json: { "id": job.id, "upcloseStreamUrl": job.upcloseStreamUrl, "liveDelay": job.liveDelay / 1000 } }, (error, response, body) => {
                         log("Calling callback to notify stream started: " + job.callbackUrl, job);
-                        if (error || response.statusCode != 200) {
+                        if (error || !response || response.statusCode != 200) {
                             job.signalWarning("CallbackError. Error calling callback: " + response.statusCode + ", body: " + JSON.stringify(body));
                         }
                     });
