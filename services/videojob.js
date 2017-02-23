@@ -76,7 +76,7 @@ class FFmpegJob extends events.EventEmitter {
 
             if (!error && response && response.statusCode == 200) {
                 log("Stream is up! Starting it....", this);
-                this.internalStart();
+                setTimeout(this.internalStart.bind(this), this.hlsSegmentSize * 2);
             } else {
                 this.initializationErrorCount++;
                 if (this.initializationErrorCount >= INITIALIZATION_MAX_ERRORS) {
