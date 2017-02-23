@@ -317,7 +317,6 @@ function buildFfmpegCommand(job) {
     log("Building command. Job: " + job.manifestFile + ", Segment size: " + job.hlsSegmentSize + ", Segments: " + job.hlsMaxSegments, job);
     job.cmd = ffmpeg(job.streamUrl)
         .outputOptions([
-            '-re',
             '-acodec copy',
             '-vcodec copy',
             '-hls_time ' + job.hlsSegmentSize,
